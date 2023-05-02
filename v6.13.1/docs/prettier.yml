@@ -1,0 +1,21 @@
+---
+variables:
+  PRETTIER_DEFAULT_ARGS:
+    --check --ignore-unknown --config-precedence file-override
+  PRETTIER_EXTRA_ARGS: ""
+  PRETTIER_CHECK_PATH: "."
+
+docs:prettier:
+  stage: test
+  image:
+    name: registry.gitlab.com/just-ci/images/prettier:latest
+    entrypoint: []
+  script:
+    - |
+      if ! prettier ${PRETTIER_DEFAULT_ARGS} ${PRETTIER_EXTRA_ARGS} ${PRETTIER_CHECK_PATH}; then
+        echo "[!] Run the following in the root of the repository:"
+        echo "docker run -u \$(id -u):\$(id -g) -v \"\${PWD}:\${PWD}\" registry.gitlab.com/just-ci/images/prettier:latest \\"
+        echo "prettier --write --ignore-unknown ${PRETTIER_EXTRA_ARGS} \${PWD}"
+        exit 1
+      fi
+  needs: []

@@ -1,0 +1,39 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/v6.19.2/project-automation/telemetry.yml
+
+.fix:GL_TOKEN:
+  stage: .pre
+  image: docker.io/alpine:3
+  variables:
+    GIT_STRATEGY: none
+    JOB_NAME: project automation
+  script:
+    - echo "[!] For the ${JOB_NAME} job, you need to provide a Protected and
+      Masked variable named 'GL_TOKEN' with a {Project, Group, Personal} Access
+      Token with 'api' scope."
+    - echo "[+] For details, see the README at
+      https://gitlab.com/just-ci/templates#how-to-use"
+    - exit 1
+  allow_failure: true
+  rules:
+    - if:
+        "$CI_COMMIT_REF_PROTECTED == 'true' && $GL_TOKEN == null &&
+        $DISABLE_GL_TOKEN_CHECK == null"
+
+.release:rules:
+  rules:
+    - if: "$CI_COMMIT_REF_PROTECTED && $GL_TOKEN && $CI_COMMIT_TAG == null"
+      exists:
+        - tbump.toml
+        - pyproject.toml
+    - when: never
+
+.release:install:
+  script:
+    - |
+      for PACKAGE in ${NPM_PACKAGES}; do
+        if ! npm list -g "${PACKAGE}" >/dev/null; then
+          npm install -g "${PACKAGE}"
+        fi
+      done

@@ -1,0 +1,5 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/rhtenhove-main-patch-05418/python/black.yml
+  - remote: https://jobs.just-ci.dev/rhtenhove-main-patch-05418/python/isort.yml
+  - remote: https://jobs.just-ci.dev/rhtenhove-main-patch-05418/python/pyupgrade.yml

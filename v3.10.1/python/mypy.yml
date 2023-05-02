@@ -1,0 +1,23 @@
+---
+# https://github.com/python/mypy
+# this job uses mypy2junit to get the junitxml report in gitlab CI
+
+python:mypy:
+  stage: test
+  image: registry.gitlab.com/notno/python-tests
+  variables:
+    CHECK_PATH: "./${PYTHON_PACKAGE}"
+    DEFAULT_SETTINGS: "--strict --ignore-missing-imports --show-error-context"
+    EXTRA_SETTINGS: ""  # Use this to add your settings to the default
+  before_script:
+    - pip install .
+  script:
+    - pip install mypy
+    - mypy --install-types --non-interactive --junit-xml ${CI_PROJECT_DIR}/mypy-report.xml ${DEFAULT_SETTINGS} ${EXTRA_SETTINGS} ${CHECK_PATH}
+  artifacts:
+    reports:
+      junit: mypy-report.xml
+  cache:
+    key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
+    paths:
+      - .mypy_cache/

@@ -1,0 +1,25 @@
+---
+# pycln checks for unused imports
+# https://pypi.org/project/pycln/
+include:
+  - remote: https://jobs.just-ci.dev/rhtenhove-main-patch-05418/python/generic.yml
+
+variables:
+  PYCLN_DEFAULT_ARGS: --all --expand-stars
+  PYCLN_EXTRA_ARGS: ""
+
+python:pycln:
+  extends: .python:pre
+  variables:
+    JOB_PACKAGE: pycln
+  script:
+    - !reference [".python:pre", script]
+    - pycln --version
+    - pycln --check --diff ${PYCLN_DEFAULT_ARGS} ${PYCLN_EXTRA_ARGS}
+      --extend-exclude "${PYTHON_EXCLUDE_REGEX:-($^)}" .
+  after_script:
+    - |
+      if [ ${CI_JOB_STATUS} != "success" ]; then
+        echo "Run 'pycln ${PYCLN_DEFAULT_ARGS} ${PYCLN_EXTRA_ARGS} --extend-exclude "${PYTHON_EXCLUDE_REGEX:-($^)}" .' in your source directory to fix these."
+      fi
+  needs: []

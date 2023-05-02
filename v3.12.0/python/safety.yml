@@ -1,0 +1,16 @@
+---
+# safety checks your installed python dependencies for known
+# security vulnerabilities
+# https://pypi.org/project/safety/
+
+# This variable tells the kaniko job to add python testing
+# packages to a separate testing image
+
+python:safety:
+  stage: test
+  image: registry.gitlab.com/notno/python-tests
+  before_script:
+    - pip install .
+  script:
+    - pip install safety
+    - safety check

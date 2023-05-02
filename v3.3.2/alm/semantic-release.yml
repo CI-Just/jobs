@@ -1,0 +1,22 @@
+---
+# https://github.com/semantic-release/semantic-release#commit-message-format
+# https://levelup.gitconnected.com/semantic-versioning-and-release-automation-on-gitlab-9ba16af0c21
+
+# yamllint disable rule:line-length
+
+semantic-release:
+  image: registry.gitlab.com/notno/semantic-release-gitlab:latest
+  stage: .post
+  variables:
+    PLUGINS: "@semantic-release/commit-analyzer @semantic-release/release-notes-generator @semantic-release/gitlab"
+    # See https://semantic-release.gitbook.io/semantic-release/usage/configuration
+    EXTRA_ARGS: ""
+  script:
+    - semantic-release ${EXTRA_ARGS} --plugins $PLUGINS
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+include:
+  - remote: https://jobs.just-ci.dev/v3.3.2/'alm/semantic-release-badge.yml'

@@ -1,0 +1,43 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/v6.1.0-beta.3/container/image.yml
+
+variables:
+  SYFT_REGISTRY_AUTH_AUTHORITY: ${CI_REGISTRY}
+  SYFT_REGISTRY_AUTH_USERNAME: ${CI_REGISTRY_USER}
+  SYFT_REGISTRY_AUTH_PASSWORD: ${CI_REGISTRY_PASSWORD}
+  GRYPE_FAIL_ON_THRESHOLD: critical
+  GRYPE_EXTRA_ARGS: ""
+  GRYPE_DEFAULT_ARGS: --only-fixed
+  GRYPE_CVE_BLACKLIST_REGEX: CVE-xxx
+
+.grype:
+  image: docker.io/alpine:3
+  stage: test
+  script:
+    - !reference [".image:name", script]
+    - wget -O- https://raw.githubusercontent.com/anchore/syft/main/install.sh |
+      sh -s -- -b /usr/local/bin
+    - wget -O- https://raw.githubusercontent.com/anchore/grype/main/install.sh |
+      sh -s -- -b /usr/local/bin
+    - echo "${IMAGE_NAME}:${IMAGE_DEV_TAG}"
+    # 0) get the SBOM from syft
+    - syft packages ${IMAGE_NAME}:${IMAGE_DEV_TAG} -o json > syft.json
+    # 1) run grype on syft SBOM report to obtain a full grype report with all vulnerabilities
+    - grype sbom:syft.json --output=table --file grype.txt
+    # 2) fail job if any of blacklisted vulnerabilities is in grype output. Grype does not provide blacklisting natively.
+    - cat grype.txt | grep -E ${GRYPE_CVE_BLACKLIST_REGEX} && exit 1 || exit 0
+    # 3) fail job if vulnerabilities at or above GRYPE_FAIL_ON_THRESHOLD
+    - grype sbom:syft.json --output=table --file grype.txt --fail-on
+      ${GRYPE_FAIL_ON_THRESHOLD} ${GRYPE_DEFAULT_ARGS} ${GRYPE_EXTRA_ARGS}
+  artifacts:
+    paths:
+      - syft.json
+      - grype.txt
+    when: always
+  allow_failure: true
+  needs:
+    - image:build
+
+grype:
+  extends: .grype

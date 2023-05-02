@@ -1,0 +1,20 @@
+---
+# bandit performs static security analysis of python packages
+# https://bandit.readthedocs.io/en/latest/
+include:
+  - remote: https://jobs.just-ci.dev/v6.15.1/python/generic.yml
+
+variables:
+  BANDIT_SKIP_CHECK: "" # Comma separated, i.e.: B101,B703
+  BANDIT_EXTRA_ARGS: ""
+
+python:bandit:
+  extends: .python:pre
+  variables:
+    JOB_PACKAGE: bandit
+  script:
+    - !reference [".python:pre", script]
+    - BANDIT_EXCLUDE_PATHS="./$(echo ${PYTHON_EXCLUDE_PATHS} | sed
+      's/\,/\,\.\//g')"
+    - bandit --verbose --recursive . --exclude "${BANDIT_EXCLUDE_PATHS}" --skip
+      "${BANDIT_SKIP_CHECK}" ${BANDIT_EXTRA_ARGS}

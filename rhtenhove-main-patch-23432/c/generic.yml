@@ -1,0 +1,23 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/rhtenhove-main-patch-23432/project-automation/telemetry.yml
+
+variables:
+  C_EXCLUDE_PATHS: tests
+  C_EXCLUDE_REGEX: (tests)
+
+.c:pre:
+  extends: .telemetry
+  image:
+    name: registry.gitlab.com/just-ci/images/c:latest
+    entrypoint: [""]
+  stage: test
+  script:
+    - pip3 install -q ${JOB_PACKAGE} && echo "[+] ${JOB_PACKAGE} successfully
+      installed."
+    - |
+      echo "[*] Job info:"
+      echo "Context path: ${C_CONTEXT:=.}"
+      echo "Excluded paths: ${C_EXCLUDE_PATHS:-(not specified)}"
+      echo "Excluded regex: ${C_EXCLUDE_REGEX:-(not specified)}"
+    - cd ${C_CONTEXT}

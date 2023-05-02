@@ -1,0 +1,45 @@
+include:
+  - template: 'Workflows/MergeRequest-Pipelines.gitlab-ci.yml'
+  - local: 'alm/semantic-release.yml'
+  - local: 'alm/semantic-release-badge.yml'
+
+downstream:python-tests:
+  stage: test
+  variables:
+    TARGET_REF: ${CI_COMMIT_REF_NAME}
+  trigger:
+    project: utils/tests/python
+    strategy: depend
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - when: always
+
+downstream:pandoc:
+  stage: test
+  trigger:
+    project: template/report
+    strategy: depend
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - changes:
+        - docs/report-pandoc.yml
+
+downstream:pages:
+  stage: test
+  trigger:
+    project: utils/tests/pages
+    strategy: depend
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - changes:
+        - other/pages-hugo.yml
+
+semantic-release:dry-run:
+  extends: semantic-release
+  variables:
+    EXTRA_ARGS: "--dry-run --branches testing"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "testing"'

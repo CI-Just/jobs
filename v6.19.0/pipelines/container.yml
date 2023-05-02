@@ -1,0 +1,12 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/v6.19.0/project-automation/workflow.yml
+  - remote: https://jobs.just-ci.dev/v6.19.0/container/kaniko.yml
+  - remote: https://jobs.just-ci.dev/v6.19.0/container/buildah.yml
+  - remote: https://jobs.just-ci.dev/v6.19.0/container/docker.yml
+  - remote: https://jobs.just-ci.dev/v6.19.0/container/grype.yml
+
+# set the project container dev image to the image for all jobs without a job-level default image
+image:
+  name: ${IMAGE_NAME}:${IMAGE_DEV_TAG}
+  entrypoint: [""]

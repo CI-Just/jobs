@@ -1,0 +1,22 @@
+# pytest is the most popular python framework to perform unit tests
+# https://docs.pytest.org/en/stable/
+
+# currently testcontainers tests will hang forever if the gitlab runner is running in docker
+# use a regular runner or skip the tests by checking for env variable "CI"
+
+# This variable tells the kaniko job to add python testing packages to a separate testing image
+variables:
+  PYTHON_TEST: "true"
+
+python:pytest:
+  image: ${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_NAME}-testing
+  stage: test
+  variables:
+    PYTEST_COVERAGE_THRESHOLD: "25"
+    EXTRA_ARGS: ""  # Set optional arguments
+  script:
+    - pip show pytest
+    - python -m pytest -vv --cov=${PYTHON_PACKAGE} --cov-fail-under=${PYTEST_COVERAGE_THRESHOLD} --junitxml=${CI_PROJECT_DIR}/pytest-report.xml ${EXTRA_ARGS}
+  artifacts:
+    reports:
+      junit: pytest-report.xml

@@ -1,0 +1,3 @@
+---
+include:
+  - remote: "https://jobs.just-ci.dev/v3.15.0/python/poetry/check.yml"

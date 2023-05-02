@@ -1,0 +1,6 @@
+---
+include:
+  - local: pipelines/python.yml
+
+variables:
+  PYTHON_CONTEXT: tests/mockup_projects/python/pep518

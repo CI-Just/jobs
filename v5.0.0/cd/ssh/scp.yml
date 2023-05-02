@@ -1,0 +1,6 @@
+---
+scp:
+  extends: .ssh
+  stage: deliver
+  script:
+    - scp -r "${CI_PROJECT_DIR}" ${REMOTE_USER}@${REMOTE_HOST}:"${SCP_REMOTE_DEST_DIR}" || true

@@ -1,0 +1,13 @@
+---
+include:
+  - local: web/pages.yml
+
+.hugo:
+  variables:
+    HUGO_BASEURL: ${CI_PAGES_URL}
+    HUGO_DEFAULT_ARGS: "" # minify causes problems with our README
+  before_script:
+    - cd tests/mockup_projects/pages
+    - git clone https://github.com/alexandrevicenzi/soho.git themes/soho
+    - mkdir content
+    - cp ${CI_PROJECT_DIR}/README.md content/_index.md

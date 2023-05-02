@@ -1,0 +1,11 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/main/rust/generic.yml
+
+rust:clippy:
+  extends: .rust
+  stage: test
+  script:
+    - rustup component add clippy
+    - cargo update
+    - cargo clippy

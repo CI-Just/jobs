@@ -1,0 +1,26 @@
+---
+# Add plugins by changing INSTALL_PYTEST_PLUGINS.
+# See https://docs.pytest.org/en/latest/reference/plugin_list.html for available plugins
+
+python:pytest:
+  image: registry.gitlab.com/notno/python-tests
+  stage: test
+  variables:
+    PYTEST_COVERAGE_THRESHOLD: "25"
+    INSTALL_PYTEST_PLUGINS: "pytest-asyncio pytest-xdist"
+    CHECK_PATH: "./${PYTHON_PACKAGE}"
+    DEFAULT_ARGS: "-vvv --capture=tee-sys"
+    EXTRA_ARGS: ""  # Set optional arguments
+  before_script:
+    - pip install .
+  script:
+    - pip install pytest pytest-asyncio pytest-xdist pytest-cov
+    - python -m pytest --cov=${CHECK_PATH} --cov-fail-under=${PYTEST_COVERAGE_THRESHOLD} --junitxml=${CI_PROJECT_DIR}/pytest-report.xml --cov-report xml:${CI_PROJECT_DIR}/pytest-coverage.xml -o cache_dir=${CI_PROJECT_DIR}/.pytest_cache ${DEFAULT_ARGS} ${EXTRA_ARGS}
+  artifacts:
+    reports:
+      junit: pytest-report.xml
+      cobertura: pytest-coverage.xml
+  cache:
+    key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
+    paths:
+      - .pytest_cache

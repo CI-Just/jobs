@@ -1,0 +1,9 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/rhtenhove-main-patch-05418/web/hugo.yml
+  - remote: https://jobs.just-ci.dev/rhtenhove-main-patch-05418/web/pages.yml
+
+.pages:
+  extends: .hugo
+  script:
+    - !reference [".hugo", script]

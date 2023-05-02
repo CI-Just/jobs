@@ -1,0 +1,15 @@
+---
+include:
+  - local: pipelines/container.yml
+
+variables:
+  IMAGE_NAME: ${CI_REGISTRY_IMAGE}/buildah
+  IMAGE_CONTEXT: tests/mockup_projects/container/polyrepo
+
+grype:
+  variables:
+    GRYPE_FAIL_ON_THRESHOLD: ""
+  allow_failure: false
+
+.image:build:
+  extends: .buildah

@@ -1,0 +1,19 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/v6.24.0/python/generic.yml
+
+python:package-discovery:
+  extends: .python:pre
+  stage: build
+  script:
+    - cd ${PYTHON_CONTEXT:-.}
+    - |
+      printf "PYTHON_PACKAGE=" > ${CI_PROJECT_DIR}/package.env
+      printf "[*] Auto discovered package: "
+      pip3 install . --no-deps | grep 'Installing collected packages: ' | cut -d' ' -f4 | tr - _ | tee -a ${CI_PROJECT_DIR}/package.env
+      echo "[*] If this is not correct, provide the package name variable PYTHON_PACKAGE=<package_name> in your .gitlab-ci.yml"
+  artifacts:
+    reports:
+      dotenv: package.env
+  rules:
+    - if: "$PYTHON_PACKAGE == null"

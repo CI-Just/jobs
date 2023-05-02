@@ -1,0 +1,24 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/v6.23.1/python/extras-discovery.yml
+  - remote: https://jobs.just-ci.dev/v6.23.1/python/generic.yml
+
+variables:
+  PYTHON_PACKAGE_EXTRAS: "" # Comma-separated list of extras that are to be installed. If "*", then this variable is populated by python:extras-discovery.
+
+.python:install-extras:
+  extends:
+    - .python:pre
+  script:
+    - |
+      if [ -z "${PYTHON_PACKAGE_EXTRAS}" ]; then
+        echo "[*] No extras selected."
+      else
+        echo "[*] The following extras are selected for installation with package ${PYTHON_PACKAGE}: ${PYTHON_PACKAGE_EXTRAS}"
+        PIP_PACKAGE_INSTALL_EXTRA_ARGS="${PIP_PACKAGE_INSTALL_EXTRA_ARGS} .[${PYTHON_PACKAGE_EXTRAS}]"
+        echo "[*] Extended PIP_PACKAGE_INSTALL_EXTRA_ARGS with .[${PYTHON_PACKAGE_EXTRAS}]"
+      fi
+    - !reference [".python:pre-install", script]
+  needs:
+    - job: python:extras-discovery
+      optional: true

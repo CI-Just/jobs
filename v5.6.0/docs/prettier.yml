@@ -1,0 +1,17 @@
+---
+docs:prettier:
+  stage: test
+  image:
+    name: registry.gitlab.com/just-ci/images/prettier:latest
+    entrypoint: []
+  variables:
+    DEFAULT_ARGS: --check --ignore-unknown --config-precedence file-override
+    EXTRA_ARGS: ""
+    CHECK_PATH: "."
+  script:
+    - |
+      if ! prettier ${DEFAULT_ARGS} ${EXTRA_ARGS} ${CHECK_PATH}; then
+        echo "[!] Run the following in the root of your repository: \
+        prettier --write --ignore-unknown ${EXTRA_ARGS} ${CHECK_PATH}"
+        exit 1
+      fi

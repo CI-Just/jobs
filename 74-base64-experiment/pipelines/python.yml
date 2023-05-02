@@ -1,0 +1,17 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/74-base64-experiment/project-automation/workflow.yml
+  - remote: https://jobs.just-ci.dev/74-base64-experiment/python/collections/quality.yml
+  - remote: https://jobs.just-ci.dev/74-base64-experiment/python/collections/release.yml
+  - remote: https://jobs.just-ci.dev/74-base64-experiment/python/collections/security.yml
+  - remote: https://jobs.just-ci.dev/74-base64-experiment/python/collections/style.yml
+
+python:twine:
+  rules:
+    - if: ($CI_COMMIT_TAG =~ /^v[0-9]+(\.[0-9]+){2}(.*)$/)
+
+python:bandit:
+  allow_failure: true
+
+python:safety:
+  allow_failure: true

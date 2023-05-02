@@ -1,0 +1,13 @@
+---
+# Check the package repo on how to configure this job
+# https://github.com/sandrochuber/pylic
+
+python:pylic:
+  stage: test
+  image: python:slim
+  before_script:
+    - pip install .
+  script:
+    - pip install pylic
+    - pylic
+  needs: []

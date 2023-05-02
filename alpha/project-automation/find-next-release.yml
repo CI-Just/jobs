@@ -1,0 +1,23 @@
+---
+find-next-release:
+  stage: .pre
+  image: registry.gitlab.com/just-ci/images/node:latest
+  script:
+    - |
+      for PACKAGE in semantic-release @semantic-release/exec; do
+        if ! npm list -g "${PACKAGE}" >/dev/null; then
+          npm install -g "${PACKAGE}"
+        fi
+      done
+    - curl -sSLf
+      https://gitlab.com/just-ci/utils/-/raw/main/semantic-release/find-next-version.json
+      > .releaserc
+    - semantic-release --dry-run --no-ci
+    - echo "TBUMP_NEXT_VERSION=$(cat .VERSION 2>/dev/null)" >
+      TBUMP_NEXT_VERSION.env || true
+  artifacts:
+    reports:
+      dotenv: TBUMP_NEXT_VERSION.env
+  only:
+    variables:
+      - $GL_TOKEN

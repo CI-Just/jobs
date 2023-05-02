@@ -1,0 +1,8 @@
+---
+helm:lint:
+  stage: test
+  image: alpine/k8s:1.21.5
+  script:
+    - helm lint
+  rules:
+    - if: $CI_COMMIT_BRANCH

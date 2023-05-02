@@ -1,0 +1,4 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/pytest-import/pipelines/project-automation.yml
+  - remote: https://jobs.just-ci.dev/pytest-import/pipelines/c.yml

@@ -1,0 +1,45 @@
+---
+# Check the package repo on how to configure this job
+# https://github.com/sandrochuber/pylic
+include:
+  - remote: https://jobs.just-ci.dev/v6.8.3/python/generic.yml
+
+variables:
+  PYLIC_SKIP_EXTRAS: "" # Comma-separated list of extras that are to be skipped
+
+python:pylic:
+  extends:
+    - .python:pre
+    - .python:pre-install
+  variables:
+    INSTALL_USER_PACKAGE: "true"
+    JOB_PACKAGE: importlib_metadata
+    PIP_PACKAGE_INSTALL_EXTRA_ARGS: --no-deps
+  script:
+    # work in venv
+    - python3 -m venv .venv
+    - source .venv/bin/activate
+    - !reference [".python:pre", script]
+    - !reference [".python:pre-install", script]
+    # Extract package extras from metadata
+    - EXTRAS=$(python -c "from importlib_metadata import metadata;
+      print(','.join((extra for extra in
+      metadata('${PYTHON_PACKAGE}').get_all('Provides-Extra', []) if not extra
+      in '${PYLIC_SKIP_EXTRAS}'.split(','))), end='')")
+    # work in venv
+    - python3 -m venv .venv
+    - source .venv/bin/activate
+    - pip3 install pylic
+    # if any extra dependencies are found, install them too
+    - |
+      if [ -z "${EXTRAS}" ]; then
+        echo "[*] Installing package without extras."
+        pip3 install .
+      else
+        echo "[*] Installing package with extras: ${EXTRAS}"
+        pip3 install .[${EXTRAS}]
+      fi
+    - echo "[*] The following packages, with their respective version, will be
+      checked:"
+    - pylic list
+    - pylic check

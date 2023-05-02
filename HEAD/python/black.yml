@@ -1,0 +1,15 @@
+---
+# black is the uncompromising python code formatter
+# https://github.com/psf/black
+include:
+  - remote: https://jobs.just-ci.dev/HEAD/python/generic.yml
+
+python:black:
+  extends: .python:pre
+  variables:
+    JOB_PACKAGE: black
+  script:
+    - !reference [".python:pre", script]
+    - black --version
+    - black --check --diff --color --exclude "${PYTHON_EXCLUDE_REGEX}" .
+  needs: []

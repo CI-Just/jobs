@@ -1,0 +1,5 @@
+include:
+  - remote: https://jobs.just-ci.dev/v3.0.1/'docker/kaniko-template.yml'
+
+kaniko:
+  extends: .kaniko-template

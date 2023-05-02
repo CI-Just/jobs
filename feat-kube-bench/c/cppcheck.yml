@@ -1,0 +1,18 @@
+---
+c:cppcheck:
+  stage: test
+  image: registry.gitlab.com/just-ci/images/c:latest
+  variables:
+    CHECK_PATH: "."  # Can be a file
+    DEFAULT_ARGS: "--report-progress --verbose"
+    EXTRA_ARGS: ""
+    ENABLE: "all"
+    ERROR_EXIT_CODE: 1  # Which exit code on failure
+  script:
+    - cppcheck --xml-version=2 ${DEFAULT_ARGS} ${EXTRA_ARGS} --enable=${ENABLE} --error-exitcode=0 ${CHECK_PATH} 2> cppcheck-result.xml
+    - cppcheck_junit cppcheck-result.xml cppcheck-junit.xml
+    - cppcheck ${EXTRA_ARGS} --enable=${ENABLE} --error-exitcode=${ERROR_EXIT_CODE} ${CHECK_PATH}
+  needs: []
+  artifacts:
+    reports:
+      junit: cppcheck-junit.xml

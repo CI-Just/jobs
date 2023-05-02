@@ -1,0 +1,32 @@
+---
+# Add plugins by changing INSTALL_PYTEST_PLUGINS.
+# See https://docs.pytest.org/en/latest/reference/plugin_list.html for available plugins
+include:
+  - remote: https://jobs.just-ci.dev/v6.3.1/python/generic.yml
+
+variables:
+  PYTEST_COVERAGE_THRESHOLD: "25"
+  PYTEST_INSTALL_PLUGINS: "" # See https://docs.pytest.org/en/latest/reference/plugin_list.html
+  PYTEST_DEFAULT_ARGS:
+    -vvv --capture=tee-sys -o log_cli=true -o log_cli_level=DEBUG --color=yes
+  PYTEST_EXTRA_ARGS: ""
+
+python:pytest:
+  stage: test
+  variables:
+    PACKAGE: pytest pytest-cov ${PYTEST_INSTALL_PLUGINS}
+  script:
+    - !reference [".python:pre", script]
+    - pip3 install . || true # installs package only if available
+    - python3 -m pytest --cov=${PYTHON_PACKAGE}
+      --cov-fail-under=${PYTEST_COVERAGE_THRESHOLD}
+      --junitxml=${CI_PROJECT_DIR}/pytest-report.xml --cov-report
+      xml:${CI_PROJECT_DIR}/pytest-coverage.xml -p no:cacheprovider
+      ${PYTEST_DEFAULT_ARGS} ${PYTEST_EXTRA_ARGS} .
+  coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
+  artifacts:
+    reports:
+      junit: pytest-report.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: pytest-coverage.xml

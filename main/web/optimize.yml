@@ -1,0 +1,15 @@
+---
+# Reference these scripts as follows to integrate them into your jobs:
+
+# before_script:
+#   - !reference [".web:optimize", images]
+#   - !reference [".web:optimize", other]
+#   - echo "something else"
+
+# Place these where they are best suited. For example, optimize images _before_
+# building your site, so these may be for example gzipped with an efficient size.
+
+.web:optimize:
+  images:
+    - find . -type f -name "*.jpg" -o -name "*.jpeg" -exec magick mogrify
+      -verbose -strip -interlace Plane -quality 75 -resize 2560x\> {} \;

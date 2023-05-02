@@ -1,0 +1,16 @@
+---
+# Check the package page on how to configure this job
+# https://pypi.org/project/pip-licenses/
+
+python:poetry:pip-licenses:
+  stage: test
+  image: registry.gitlab.com/notno/python-tests:latest
+  variables:
+    ALLOWED: ""  # Empty means all. Semicolon separated list. See https://pypi.org/project/pip-licenses/#option-allow-only
+  before_script:
+    - pip install .
+  script:
+    - pip install pip-licenses
+    - PACKAGES=$(dasel select -f pyproject.toml "tool.poetry.dependencies" | cut -d' ' -f1 | tr '\n' ' ')
+    - pip-licenses --allow-only="${ALLOWED}" --packages ${PACKAGES}
+  needs: []

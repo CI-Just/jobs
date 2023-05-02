@@ -1,0 +1,16 @@
+---
+# https://dwheeler.com/flawfinder/
+include:
+  - remote: https://jobs.just-ci.dev/v6.0.1/python/generic.yml
+
+python:flawfinder:
+  extends: .python:pre
+  variables:
+    ERROR_LEVEL: "3"
+    MIN_LEVEL: "1"
+    DEFAULT_ARGS: "--falsepositive --immediate --context"
+    EXTRA_ARGS: ""
+  script:
+    - pip3 install flawfinder
+    - flawfinder ${DEFAULT_ARGS} ${EXTRA_ARGS} --minlevel ${MIN_LEVEL}
+      --error-level=${ERROR_LEVEL} .

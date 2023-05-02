@@ -1,0 +1,28 @@
+---
+# https://github.com/containers/buildah
+include:
+  - remote: https://jobs.just-ci.dev/v6.6.0/container/image.yml
+
+variables:
+  BUILDAH_EXTRA_ARGS: "" # https://github.com/containers/buildah/blob/main/docs/buildah-build.1.md
+
+.buildah:
+  stage: build
+  extends: [".image:rules", ".image:name"]
+  image: quay.io/buildah/stable:latest
+  script:
+    - !reference [".image:name", script]
+    - |
+      if [ "${BUILDAH_EXTRA_ARGS}" != "" ]; then
+        echo "[*] Applying the extra arguments '${BUILDAH_EXTRA_ARGS}'."
+      fi
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$(echo -n
+      ${CI_REGISTRY_USER}:${CI_REGISTRY_PASSWORD} | base64)\"}}}" >
+      /tmp/auth.json
+    - buildah build --authfile /tmp/auth.json -f ${IMAGE_CONTAINERFILE}
+      --tag=${IMAGE_NAME}:${IMAGE_DEV_TAG} --tag=${IMAGE_NAME}:${IMAGE_TAG}
+      --layers=${IMAGE_CACHE} ${BUILDAH_EXTRA_ARGS} ${IMAGE_CONTEXT}
+    - |
+      for IMAGE in "${IMAGE_NAME}:${IMAGE_TAG}" "${IMAGE_NAME}:${IMAGE_DEV_TAG}"; do
+        buildah push --authfile /tmp/auth.json ${IMAGE}
+      done

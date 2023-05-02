@@ -1,0 +1,26 @@
+---
+# https://pypi.org/project/tbump/
+include:
+  - remote: "https://gitlab.com/just-ci/templates/-/raw/v6.0.1/python/generic.yml"
+
+tbump:
+  extends: .python:pre
+  stage: build
+  script:
+    - |
+      if [ ! "${TBUMP_NEXT_VERSION}" = "" ]; then
+        pip3 install tbump
+        tbump ${TBUMP_NEXT_VERSION} --only-patch --non-interactive
+        printf "BUMPED_FILES=" > bumped_files.env
+        echo "$(git diff --name-only | tr '\n' ' ')" >> bumped_files.env
+      else
+        echo "[-] No new version will be released."
+      fi
+  artifacts:
+    paths:
+      - ./*
+    exclude:
+      - bumped_files.env
+      - .git
+    reports:
+      dotenv: bumped_files.env

@@ -1,0 +1,8 @@
+---
+include:
+  - local: docs/drawio.yml
+  - local: docs/md-presentation.yml
+  - local: pipelines/workflow.yml
+
+before_script:
+  - cd tests/mockup_projects/docs

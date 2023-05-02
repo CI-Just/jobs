@@ -1,0 +1,25 @@
+---
+.pages:
+  stage: deploy
+  script:
+    - |
+      if ! test -d "${CI_PROJECT_DIR}/public"; then
+        echo "[!] No 'public' dir found, make sure you have something to publish."
+      fi
+  artifacts:
+    paths:
+      - public
+    when: always
+
+pages:
+  extends: .pages
+  environment:
+    name: ${CI_COMMIT_REF_SLUG}
+    url: ${CI_PAGES_URL}
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+
+pages:branch:
+  extends: .pages
+  rules:
+    - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH

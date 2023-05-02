@@ -1,0 +1,15 @@
+---
+python:semantic-release:version:
+  image: registry.gitlab.com/notno/python-tests:latest
+  stage: build
+  script:
+    - pip install python-semantic-release
+    # 1. semantic release will bump versions in files -> we want this
+    # 2. THEN it will try to commit to git -> we don't want this! -> we let it fail and hide the output
+    - env -u GIT_EMAIL -u GIT_USERNAME semantic-release version &>/dev/null || true
+    # 3. all changed files are passed as artifacts to the next stages
+  artifacts:
+    paths:
+      - ./*
+    exclude:
+      - .git

@@ -1,0 +1,8 @@
+---
+include:
+  - remote: "https://jobs.just-ci.dev/33-feat-helm-jobs/python/flawfinder.yml"
+  - remote: "https://jobs.just-ci.dev/33-feat-helm-jobs/c/cppcheck.yml"
+
+variables:
+  FLAWFINDER_ERROR_LEVEL: "3"
+  DIRECTORIES: "."

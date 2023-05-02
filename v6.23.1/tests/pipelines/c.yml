@@ -1,0 +1,8 @@
+---
+include:
+  - local: pipelines/c.yml
+
+variables:
+  C_CONTEXT: tests/mockup_projects/c
+  CPPCHECK_EXIT_CODE: 0
+  FLAWFINDER_ERROR_LEVEL: "6"

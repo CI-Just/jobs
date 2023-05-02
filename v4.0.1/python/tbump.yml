@@ -1,0 +1,26 @@
+---
+# https://pypi.org/project/tbump/
+
+variables:
+  PYVERSION: "latest"
+
+tbump:
+  image: registry.gitlab.com/just-ci/images/python:$PYVERSION
+  stage: build
+  script:
+    - pip3 install tbump
+    - |
+      if [ -z ${NEXT_RELEASE_VERSION} ]
+      then
+        echo "NEXT_RELEASE_VERSION variable unset, will not tbump files"
+      else
+        echo "NEXT_RELEASE_VERSION is set to $NEXT_RELEASE_VERSION"
+        tbump $NEXT_RELEASE_VERSION --only-patch --non-interactive
+        printf "BUMPED_FILES=" > bumped_files.env
+        echo "$(git diff --name-only | tr '\n' ' ')" >> bumped_files.env
+      fi
+  artifacts:
+    paths:
+      - ./*
+    reports:
+      dotenv: bumped_files.env

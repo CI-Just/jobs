@@ -1,0 +1,23 @@
+---
+# a vulnerability scanner for container images and filesystems
+# https://github.com/anchore/grype
+
+variables:
+  GRYPE_IMAGE: "${CI_REGISTRY_IMAGE}:latest"
+  GRYPE_SCOPE: "Squashed"
+  GRYPE_OUTPUT_FORMAT: "table"
+  GRYPE_FAIL_ON: "medium"
+
+grype:
+  image: registry.gitlab.com/notno/ci/images/grype:latest
+  stage: test
+  script:
+    - |
+      echo "Will run grype on ${GRYPE_IMAGE}"
+      skopeo copy --src-creds=${CI_REGISTRY_USER}:${CI_REGISTRY_PASSWORD} docker://"${GRYPE_IMAGE}" oci://${CI_PROJECT_DIR}/${CI_COMMIT_SHORT_SHA}
+      echo "Running grype with following options:"
+      echo "GRYPE_SCOPE=${GRYPE_SCOPE} selection of layers to analyze, options=[Squashed AllLayers] (default 'Squashed')"
+      echo "GRYPE_OUTPUT_FORMAT=${GRYPE_OUTPUT_FORMAT} report output formatter, options=[json table cyclonedx] (default 'table')"
+      echo "GRYPE_FAIL_ON=${GRYPE_FAIL_ON} set the return code to 1 if a vulnerability is found with a severity >= the given severity, options=[negligible low medium high critical]"
+    - grype version
+    - grype --scope=${GRYPE_SCOPE} --fail-on=${GRYPE_FAIL_ON} --output=${GRYPE_OUTPUT_FORMAT} ${CI_PROJECT_DIR}/${CI_COMMIT_SHORT_SHA}

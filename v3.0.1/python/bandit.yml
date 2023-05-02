@@ -1,0 +1,17 @@
+# bandit performs static security analysis of python packages
+# https://bandit.readthedocs.io/en/latest/
+# Add a file called `.bandit` with a custom config to the root of your project
+# if you'd like a custom bandit config
+
+python:bandit:
+  stage: test
+  image: registry.gitlab.com/notno/python-tests
+  variables:
+    SKIP_PATHS: "*/tests/*"  # Use a comma separated list to add more, such as "tests/*,src/tests.py"
+  script:
+    - pip show bandit
+    - if [ ! -z "$SKIP_PATHS" ]; then
+        SKIP_ARG="-x $SKIP_PATHS";
+      fi
+    - bandit -r $SKIP_ARG .
+  needs: []

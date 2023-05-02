@@ -1,0 +1,11 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/main/rust/generic.yml
+
+rust:test:
+  extends: .rust
+  stage: test
+  script:
+    - cargo update
+    - cargo build --verbose
+    - cargo test --verbose

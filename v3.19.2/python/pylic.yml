@@ -1,0 +1,21 @@
+---
+# Check the package repo on how to configure this job
+# https://github.com/sandrochuber/pylic
+
+# Be warned that this only checks installed packages.
+# This job does not install optional dependencies and there
+# is currently no reliable method to detect these.
+# Add packages to the EXTRA_PACKAGES variable to install these.
+
+python:pylic:
+  stage: test
+  image: python:slim
+  variables:
+    EXTRA_PACKAGES: ""  # Optional packages
+  script:
+    - pip install . ${EXTRA_PACKAGES}
+    - pip install pylic
+    - echo "[*] The following packages, with their respective version, will be checked:"
+    - pip freeze --all
+    - pylic
+  needs: []

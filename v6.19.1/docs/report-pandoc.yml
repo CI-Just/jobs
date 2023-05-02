@@ -1,0 +1,56 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/v6.19.1/project-automation/telemetry.yml
+
+variables:
+  PANDOC_EXTRA_ARGS: ""
+  PANDOC_DEFAULT_PACKAGES:
+    fvextra footnotebackref pagecolor mdframed zref needspace sourcesanspro
+    sourcecodepro titling koma-script lineno hardwrap catchfile
+  PANDOC_EXTRA_PACKAGES: "" # List the packages your document needs: https://www.ctan.org/pkg
+
+docs:pandoc-from-template:
+  extends: .telemetry
+  image:
+    name: docker.io/pandoc/latex:latest
+    entrypoint: [""]
+  stage: build
+  variables:
+    FORMATS: pdf docx html
+    DEFAULT_ARGS:
+      --standalone --table-of-contents --number-sections --citeproc --metadata
+      link-citations=true
+    PDF_ENGINE: xelatex
+    BIBLIOGRAPHY: references.yaml
+    TEMPLATE: https://raw.githubusercontent.com/Wandmalfarbe/pandoc-latex-template/master/eisvogel.tex
+    CSL: https://raw.githubusercontent.com/citation-style-language/styles/master/cell-numeric.csl
+    CSS: https://gist.githubusercontent.com/killercup/5917178/raw/40840de5352083adb2693dc742e9f75dbb18650f/pandoc.css
+    TOC_DEPTH: "2"
+    REPORT_NAME: ${CI_PROJECT_NAME}
+    METADATA_LANG: en-US
+  script:
+    - |
+      echo "[*] Installing these packages using tlmgr: ${PANDOC_DEFAULT_PACKAGES} ${PANDOC_EXTRA_PACKAGES}"
+      tlmgr update --self
+      tlmgr install ${PANDOC_DEFAULT_PACKAGES} ${PANDOC_EXTRA_PACKAGES}
+    - cd ${SOURCE_DIR}
+    - |
+      for FORMAT in ${FORMATS}; do
+        pandoc ${DEFAULT_ARGS} ${PANDOC_EXTRA_ARGS} \
+        --template="${TEMPLATE}" \
+        --pdf-engine=${PDF_ENGINE} \
+        --csl="${CSL}" \
+        --css="${CSS}" \
+        --toc-depth=${TOC_DEPTH} \
+        --bibliography="${BIBLIOGRAPHY}" \
+        --extract-media="." \
+        --metadata lang=${METADATA_LANG} \
+        --to ${FORMAT} \
+        --output "${REPORT_NAME}.${FORMAT}" \
+        *.md
+        echo "[+] ${SOURCE_DIR}/${REPORT_NAME}.${FORMAT} done."
+      done
+  artifacts:
+    paths:
+      - "**/*.*"
+    when: always

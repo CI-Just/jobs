@@ -1,0 +1,21 @@
+---
+include:
+  - local: pipelines/container/polyrepo.yml
+  - local: pipelines/workflow.yml
+
+variables:
+  IMAGE_NAME: ${CI_REGISTRY_IMAGE}/container-polyrepo
+  GRYPE_IMAGE: ${CI_REGISTRY_IMAGE}/container-polyrepo:dev-${CI_COMMIT_SHORT_SHA}
+  IMAGE_CONTEXT: ${CI_PROJECT_DIR}/tests/mockup_projects/container/polyrepo
+  IMAGE_CONTAINERFILE: ${CI_PROJECT_DIR}/tests/mockup_projects/container/polyrepo/Dockerfile
+  GRYPE_FAIL_ON_THRESHOLD: ""
+
+before_script:
+  - cd tests/mockup_projects/container/polyrepo
+
+grype:
+  allow_failure: false
+  artifacts:
+    paths:
+      - /tests/mockup_projects/container/polyrepo/${CI_COMMIT_SHORT_SHA}.json
+      - /tests/mockup_projects/container/polyrepo/${CI_COMMIT_SHORT_SHA}.txt

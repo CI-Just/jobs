@@ -1,0 +1,13 @@
+---
+include:
+  - local: pipelines/c.yml
+
+c:cppcheck:
+  variables:
+    ERROR_EXIT_CODE: 0
+    CHECK_PATH: tests/mockup_projects/c
+
+python:flawfinder:
+  variables:
+    ERROR_LEVEL: "6"
+    CHECK_PATH: tests/mockup_projects/c

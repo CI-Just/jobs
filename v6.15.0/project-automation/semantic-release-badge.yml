@@ -1,0 +1,20 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/v6.15.0/project-automation/badge.yml
+  - remote: https://jobs.just-ci.dev/v6.15.0/project-automation/semantic-release.yml
+
+badge:semantic-release:
+  extends: .badge
+  before_script:
+    - TAG_VERSION=$(git describe --tags --abbrev=0) || (echo "[!] No tags
+      present in this repository. && exit 1)"
+  variables:
+    LABEL: "version"
+    VALUE: "${TAG_VERSION}"
+    COLOR: "green"
+    URL: "${CI_PROJECT_URL}/tags/v${TAG_VERSION}"
+    BADGE_NAME: "version"
+  rules:
+    - if: "$GL_TOKEN && $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH"
+  needs:
+    - semantic-release

@@ -1,0 +1,54 @@
+---
+# https://github.com/semantic-release/semantic-release#commit-message-format
+# https://levelup.gitconnected.com/semantic-versioning-and-release-automation-on-gitlab-9ba16af0c21
+
+semantic-release:
+  image: registry.gitlab.com/just-ci/images/node:latest
+  stage: .post
+  variables:
+    EXTRA_ARGS: ""
+  script:
+    - |
+      if ! test -f ".releaserc"; then
+        echo "[!] No .releaserc file found in the root of your repository. Using default semantic-release configuration: https://gitlab.com/just-ci/utils/-/raw/main/semantic-release/gitlab-default.json"
+        echo "[-] See https://semantic-release.gitbook.io/semantic-release/usage/configuration on how to configure semantic-release."
+        curl -sSLf https://gitlab.com/just-ci/utils/-/raw/main/semantic-release/gitlab-default.json > .releaserc
+      fi
+
+      # Check if .releaserc has a list of assets we can parse and if tbump bumped any files.
+    - |
+      if jq -e '.plugins[3][1].assets[0]' .releaserc >/dev/null 2>&1 && [ ! -z ${BUMPED_FILES} ]; then
+        for FILE in ${BUMPED_FILES}; do
+          if ! jq -e --arg FILE "$FILE" '.plugins[3][1].assets | index($FILE)' .releaserc > /dev/null; then
+            echo "[!] '${FILE}' has changed, but isn't listed in the assets in
+            '.releaserc'. It will be added for you."
+            jq -e --arg FILE "$FILE" '.plugins[3][1].assets |= . + [$FILE]'
+            .releaserc > .releaserc.tmp
+            mv .releaserc.tmp .releaserc
+          fi
+        done
+      fi
+    - |
+      for PACKAGE in semantic-release @semantic-release/gitlab @semantic-release/git @semantic-release/changelog @semantic-release/exec; do
+        if ! npm list -g "${PACKAGE}" >/dev/null; then
+          npm install -g "${PACKAGE}"
+        fi
+      done
+    - semantic-release ${EXTRA_ARGS}
+  rules:
+    - if: '$GL_TOKEN'
+
+badge:semantic-release:
+  extends: .badge
+  before_script:  # We can't do this in rules as this variable is created during the pipeline run.
+    - |
+      if [ -z "${TBUMP_NEXT_VERSION}" ]; then
+        echo "[!] No next version."
+        exit 0
+      fi
+  variables:
+    LABEL: "version"
+    VALUE: "v${TBUMP_NEXT_VERSION}"
+    COLOR: "green"
+    URL: "${CI_PROJECT_URL}/tags/v${TBUMP_NEXT_VERSION}"
+    BADGE_NAME: "version"

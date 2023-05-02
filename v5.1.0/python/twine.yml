@@ -1,0 +1,15 @@
+---
+variables:
+  PYVERSION: "latest"
+
+python:twine:
+  image: registry.gitlab.com/just-ci/images/python:$PYVERSION
+  stage: .post
+  variables:
+    TWINE_USERNAME: ${CI_REGISTRY_USER}
+    TWINE_PASSWORD: ${CI_JOB_TOKEN}
+    TWINE_REGISTRY: ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi
+  script:
+    - pip3 install twine build
+    - python3 -m build
+    - twine upload --skip-existing --repository-url ${TWINE_REGISTRY} dist/*

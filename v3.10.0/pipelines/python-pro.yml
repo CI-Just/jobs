@@ -1,0 +1,22 @@
+---
+include:
+  - remote: "https://jobs.just-ci.dev/v3.10.0/pipelines/python-basic.yml"
+  - remote: "https://jobs.just-ci.dev/v3.10.0/python/bandit.yml"
+  - remote: "https://jobs.just-ci.dev/v3.10.0/python/pytest.yml"
+  - remote: "https://jobs.just-ci.dev/v3.10.0/python/safety.yml"
+  - remote: "https://jobs.just-ci.dev/v3.10.0/python/semantic-release/private.yml"
+
+python:mypy:
+  allow_failure: false
+
+python:safety:
+  needs: []
+
+python:pylint:
+  variables:
+    PYLINT_THRESHOLD: "8"
+
+python:pytest:
+  variables:
+    PYTEST_COVERAGE_THRESHOLD: "50"
+  needs: []

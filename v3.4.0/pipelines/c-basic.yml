@@ -1,0 +1,7 @@
+---
+variables:
+  FLAWFINDER_ERROR_LEVEL: "3"
+  DIRECTORIES: "."
+include:
+  - remote: https://jobs.just-ci.dev/v3.4.0/'C/flawfinder.yml'
+  - remote: https://jobs.just-ci.dev/v3.4.0/'C/cppcheck.yml'

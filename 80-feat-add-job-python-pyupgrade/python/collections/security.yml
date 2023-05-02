@@ -1,0 +1,4 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/80-feat-add-job-python-pyupgrade/python/bandit.yml
+  - remote: https://jobs.just-ci.dev/80-feat-add-job-python-pyupgrade/python/safety.yml

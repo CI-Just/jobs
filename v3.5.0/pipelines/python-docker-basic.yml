@@ -1,0 +1,13 @@
+---
+variables:
+  PYLINT_THRESHOLD: "8"
+  PYTEST_COVERAGE_THRESHOLD: "50"
+
+include:
+  - remote: "https://jobs.just-ci.dev/v3.5.0/docker/kaniko.yml"
+  - remote: "https://jobs.just-ci.dev/v3.5.0/python/black.yml"
+  - remote: "https://jobs.just-ci.dev/v3.5.0/python/pylint.yml"
+  - remote: "https://jobs.just-ci.dev/v3.5.0/python/pytest.yml"
+  - remote: "https://jobs.just-ci.dev/v3.5.0/python/bandit.yml"
+  - remote: "https://jobs.just-ci.dev/v3.5.0/python/safety.yml"
+  - remote: "https://jobs.just-ci.dev/v3.5.0/python/semantic-release/private.yml"

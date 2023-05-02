@@ -1,0 +1,24 @@
+---
+include:
+  - local: python/collections/all.yml
+  - local: pipelines/workflow.yml
+
+before_script:
+  - cd tests/mockup_projects/python/pep518
+variables:
+  PYTHON_PACKAGE: mypackage518
+
+python:build:setuptools:
+  extends: python:build
+  before_script:
+    - cd tests/mockup_projects/python/setuptools
+
+python:build:36:
+  image: registry.gitlab.com/notno/ci/images/python:3.6
+  extends: python:build
+  before_script:
+    - cd tests/mockup_projects/python/needs36
+
+python:twine:
+  rules:
+    - when: never

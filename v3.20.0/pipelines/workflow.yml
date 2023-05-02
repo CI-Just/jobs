@@ -1,0 +1,13 @@
+---
+workflow:
+  rules:
+    # Run for tags, so we get semantic versioning
+    - if: $CI_COMMIT_TAG
+    # Run for changes on the master branch (so merged MRs)
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    # Run for branches (includes MRs)
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+    # Run for manually triggered jobs from gitlab UI
+    - if: $CI_PIPELINE_SOURCE == 'web'
+    # Run for scheduled jobs
+    - if: $CI_PIPELINE_SOURCE == "schedule"

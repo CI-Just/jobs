@@ -1,0 +1,15 @@
+---
+include:
+  - local: k8s/helm/deploy.yaml
+
+variables:
+  K8S_CONFIG_DIR: tests/mockup_projects/k8s/helm/deploy
+
+helm:render:
+  extends: .helm:render
+  variables:
+    REPO_NAME: gitlab
+    REPO_URL: https://charts.gitlab.io
+    NAMESPACE: gitlab-runner
+    RELEASE: gitlab-runner
+    CHART: gitlab/gitlab-runner

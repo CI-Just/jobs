@@ -1,0 +1,8 @@
+---
+include:
+  - remote: "https://jobs.just-ci.dev/rhtenhove-main-patch-49565/python/flawfinder.yml"
+  - remote: "https://jobs.just-ci.dev/rhtenhove-main-patch-49565/c/cppcheck.yml"
+
+variables:
+  FLAWFINDER_ERROR_LEVEL: "3"
+  DIRECTORIES: "."

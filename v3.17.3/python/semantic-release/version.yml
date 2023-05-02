@@ -1,0 +1,30 @@
+---
+python:semantic-release:version:
+  image: registry.gitlab.com/notno/python-tests:latest
+  stage: build
+  script:
+    - pip install python-semantic-release
+    # 1. semantic release will bump versions in files -> we want this
+    # 2. THEN it will try to commit to git -> we don't want this! -> we allow it to fail if it fails on the git commit
+    - SEMANTIC_LOG=$(env -u GIT_AUTHOR_NAME -u GIT_AUTHOR_EMAIL -u GIT_COMMITTER_NAME -u GIT_COMMITTER_EMAIL semantic-release version 2>&1 || true)
+    - |
+      ALLOWED_GIT_ERROR="Cmd('git') failed due to: exit code(128)"
+      if grep -q "${ALLOWED_GIT_ERROR}" <<< "${SEMANTIC_LOG}"; then
+        echo "[+] Successfully parsed files using semantic release."
+      else
+        echo "${SEMANTIC_LOG}"
+        exit 1
+      fi
+    - CHANGED_FILES=$(git diff --cached --name-status | cut -f2)
+    - |
+      if [ ! -z "${CHANGED_FILES}" ]; then
+        echo -e "[+] The following files had their version changed:\n${CHANGED_FILES}"
+      else
+        echo "[!] No files were changed during versioning."
+      fi
+    # 3. all changed files are passed as artifacts to the next stages
+  artifacts:
+    paths:
+      - ./*
+    exclude:
+      - .git

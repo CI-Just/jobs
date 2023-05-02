@@ -1,0 +1,20 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/v6.19.1/project-automation/generic.yaml
+
+find-next-release:
+  extends: .release:rules
+  stage: build
+  image: registry.gitlab.com/just-ci/images/node:latest
+  variables:
+    NPM_PACKAGES: semantic-release @semantic-release/exec
+  script:
+    - !reference [".release:install", script]
+    - wget -O .releaserc
+      https://gitlab.com/just-ci/utils/-/raw/main/semantic-release/find-next-version.json
+    - semantic-release --dry-run --no-ci
+    - echo "TBUMP_NEXT_VERSION=$(cat .VERSION 2>/dev/null || echo "[!] No new
+      release" 1>&2)" > TBUMP_NEXT_VERSION.env
+  artifacts:
+    reports:
+      dotenv: TBUMP_NEXT_VERSION.env

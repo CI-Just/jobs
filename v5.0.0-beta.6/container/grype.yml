@@ -1,0 +1,49 @@
+---
+variables:
+  SYFT_OUTPUT_FILE: ${CI_COMMIT_SHORT_SHA}.json
+  SYFT_REGISTRY_AUTH_AUTHORITY: ${CI_REGISTRY}
+  SYFT_REGISTRY_AUTH_USERNAME: ${CI_REGISTRY_USER}
+  SYFT_REGISTRY_AUTH_PASSWORD: ${CI_REGISTRY_PASSWORD}
+  GRYPE_IMAGE: ${CI_REGISTRY_IMAGE}:dev-${CI_COMMIT_SHORT_SHA}
+  GRYPE_OUTPUT_FILE: ${CI_COMMIT_SHORT_SHA}.txt
+  GRYPE_FAIL_ON_THRESHOLD: "critical"
+  GRYPE_EXTRA_ARGS: ""
+  GRYPE_DEFAULT_ARGS: "--only-fixed"
+  GRYPE_CVE_BLACKLIST_REGEX: "CVE-xxx"
+
+.grype:
+  # TODO: replace alpine and installation with our custom image
+  image: alpine:3
+  stage: test
+  script:
+    - apk add --no-cache curl
+    # versions are pinned to these because of a bug in grype v0.36.0
+    - curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin v0.35.1
+    - curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin v0.31.1
+    - echo ${GRYPE_IMAGE}
+    # 0) get the SBOM from syft
+    - syft packages ${GRYPE_IMAGE} -o json > ${SYFT_OUTPUT_FILE}
+    # 1) run grype on syft SBOM report to obtain a full grype report with all vulnerabilities
+    - grype sbom:${SYFT_OUTPUT_FILE} --output=table --file ${GRYPE_OUTPUT_FILE}
+    # 2) fail job if any of blacklisted vulnerabilities is in grype output. Grype does not provide blacklisting natively.
+    - cat ${GRYPE_OUTPUT_FILE} | grep -E ${GRYPE_CVE_BLACKLIST_REGEX} && exit 1 || exit 0
+    # 3) fail job if vulnerabilities at or above GRYPE_FAIL_ON_THRESHOLD
+    - grype sbom:${SYFT_OUTPUT_FILE} --output=table --file ${GRYPE_OUTPUT_FILE} --fail-on ${GRYPE_FAIL_ON_THRESHOLD} ${GRYPE_DEFAULT_ARGS} ${GRYPE_EXTRA_ARGS}
+  artifacts:
+    paths:
+      - ${SYFT_OUTPUT_FILE}
+      - ${GRYPE_OUTPUT_FILE}
+  allow_failure: true
+
+# default for polirepos
+grype:
+  extends: .grype
+
+# hidden job for monorepos
+.grype:monorepo:
+  extends: .grype
+  variables:
+    GRYPE_CONTEXT: changeme
+    GRYPE_IMAGE: ${CI_REGISTRY_IMAGE}/${GRYPE_CONTEXT}:dev-${CI_COMMIT_SHORT_SHA}
+    SYFT_OUTPUT_FILE: ${GRYPE_CONTEXT}-${CI_COMMIT_SHORT_SHA}.json
+    GRYPE_OUTPUT_FILE: ${GRYPE_CONTEXT}-${CI_COMMIT_SHORT_SHA}.txt

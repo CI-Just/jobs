@@ -1,0 +1,16 @@
+---
+python:semantic-release:version:
+  image: registry.gitlab.com/notno/python-tests:latest
+  stage: build
+  variables:
+    EXTRA_ARGS: ""
+  script:
+    - pip install python-semantic-release
+    - NEW_VERSION=$(semantic-release print-version)
+    - GIT_COMMITTER_NAME=semantic-release GIT_COMMITTER_EMAIL=semantic-release semantic-release version ${EXTRA_ARGS}
+    - (git tag -d "v${NEW_VERSION}" 2>/dev/null && git reset HEAD~1) || true
+  artifacts:
+    paths:
+      - ./*
+    exclude:
+      - .git

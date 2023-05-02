@@ -1,0 +1,21 @@
+---
+include:
+  - remote: "https://jobs.just-ci.dev/v4.0.0-beta.22/project-automation/find-next-release.yml"
+  - remote: "https://jobs.just-ci.dev/v4.0.0-beta.22/project-automation/gitlab-recommended.yml"
+  - remote: "https://jobs.just-ci.dev/v4.0.0-beta.22/project-automation/semantic-release.yml"
+  - remote: "https://jobs.just-ci.dev/v4.0.0-beta.22/project-automation/badge.yml"
+  - remote: "https://jobs.just-ci.dev/v4.0.0-beta.22/project-automation/check-GL-token.yml"
+  - remote: "https://jobs.just-ci.dev/v4.0.0-beta.22/python/tbump.yml"
+
+tbump:
+  before_script:
+    - NEXT_RELEASE_VERSION=`cat .VERSION` || true
+    - echo $NEXT_RELEASE_VERSION
+  rules:
+    - exists:
+        - 'tbump.toml'
+      # tbump does not work easily with versions not compliant with PEP440
+      # e.g. v1.0.1-beta.1 is not PEP440 compliant
+      # but it's the default used by semantic-release
+      # as a temporary workaround we run tbump only on default branch
+      if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH

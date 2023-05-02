@@ -1,0 +1,5 @@
+---
+include:
+  - remote: "https://jobs.just-ci.dev/v3.20.0-beta.5/python/mypy.yml"
+  - remote: "https://jobs.just-ci.dev/v3.20.0-beta.5/python/pylint.yml"
+  - remote: "https://jobs.just-ci.dev/v3.20.0-beta.5/python/pytest.yml"

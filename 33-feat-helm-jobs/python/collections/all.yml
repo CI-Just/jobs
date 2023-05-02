@@ -1,0 +1,7 @@
+---
+include:
+    - remote: "https://jobs.just-ci.dev/33-feat-helm-jobs/python/collections/quality.yml"
+    - remote: "https://jobs.just-ci.dev/33-feat-helm-jobs/python/collections/release.yml"
+    - remote: "https://jobs.just-ci.dev/33-feat-helm-jobs/python/collections/security.yml"
+    - remote: "https://jobs.just-ci.dev/33-feat-helm-jobs/python/collections/style.yml"
+    - remote: "https://jobs.just-ci.dev/33-feat-helm-jobs/python/pip-licenses.yml"

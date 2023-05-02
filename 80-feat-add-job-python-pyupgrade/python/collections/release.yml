@@ -1,0 +1,5 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/80-feat-add-job-python-pyupgrade/python/build.yml
+  - remote: https://jobs.just-ci.dev/80-feat-add-job-python-pyupgrade/python/twine.yml
+  - remote: https://jobs.just-ci.dev/80-feat-add-job-python-pyupgrade/python/package-discovery.yml

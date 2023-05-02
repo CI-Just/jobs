@@ -1,0 +1,7 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/rhtenhove-main-patch-23432/python/mypy.yml
+  - remote: https://jobs.just-ci.dev/rhtenhove-main-patch-23432/python/pycln.yml
+  - remote: https://jobs.just-ci.dev/rhtenhove-main-patch-23432/python/pylint.yml
+  - remote: https://jobs.just-ci.dev/rhtenhove-main-patch-23432/python/pytest.yml
+  - remote: https://jobs.just-ci.dev/rhtenhove-main-patch-23432/python/lizard.yml

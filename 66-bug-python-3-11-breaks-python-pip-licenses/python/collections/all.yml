@@ -1,0 +1,7 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/66-bug-python-3-11-breaks-python-pip-licenses/python/collections/quality.yml
+  - remote: https://jobs.just-ci.dev/66-bug-python-3-11-breaks-python-pip-licenses/python/collections/release.yml
+  - remote: https://jobs.just-ci.dev/66-bug-python-3-11-breaks-python-pip-licenses/python/collections/security.yml
+  - remote: https://jobs.just-ci.dev/66-bug-python-3-11-breaks-python-pip-licenses/python/collections/style.yml
+  - remote: https://jobs.just-ci.dev/66-bug-python-3-11-breaks-python-pip-licenses/python/pip-licenses.yml

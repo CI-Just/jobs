@@ -1,0 +1,38 @@
+---
+# Check the package page on how to configure this job
+# https://pypi.org/project/pip-licenses/
+include:
+  - remote: https://jobs.just-ci.dev/v6.2.0/python/generic.yml
+
+variables:
+  PIP_LICENSES_ALLOWED: "" # Empty means all. Semicolon separated list. See https://pypi.org/project/pip-licenses/#option-allow-only
+  PIP_LICENSES_SKIP_EXTRAS: "" # Comma-separated list of extras that are to be skipped
+
+python:pip-licenses:
+  extends: .python:pre
+  variables:
+    PACKAGE: pip-licenses importlib_metadata
+  script:
+    - !reference [".python:pre", script]
+    # install package without any of its dependencies
+    - pip3 install . --no-deps
+    # Extract package extras from metadata
+    - EXTRAS=$(python -c "from importlib_metadata import metadata;
+      print(','.join((extra for extra in
+      metadata('${PYTHON_PACKAGE}').get_all('Provides-Extra', []) if not extra
+      in '${PIP_LICENSES_SKIP_EXTRAS}'.split(','))), end='')")
+    # work in venv
+    - python3 -m venv .venv
+    - source .venv/bin/activate
+    - pip3 install pip-licenses
+    # if any extra dependencies are found, install them too
+    - |
+      if [ -z "${EXTRAS}" ]; then
+        echo "[*] Installing ${PYTHON_PACKAGE} without extras."
+        pip3 install .
+      else
+        echo "[*] Installing ${PYTHON_PACKAGE} with extras: ${EXTRAS}"
+        pip3 install .[${EXTRAS}]
+      fi
+    # perform test
+    - pip-licenses --from=mixed --allow-only="${PIP_LICENSES_ALLOWED}"

@@ -1,0 +1,26 @@
+---
+# Check the package repo on how to configure this job
+# https://github.com/sandrochuber/pylic
+
+# Be warned that this only checks installed packages.
+# This job does not install optional dependencies and there
+# is currently no reliable method to detect these.
+# Add packages to the EXTRA_PACKAGES variable to install these.
+
+variables:
+  PYVERSION: "latest"
+
+python:pylic:
+  stage: test
+  image: registry.gitlab.com/notno/ci/images/python:$PYVERSION
+  variables:
+    EXTRA_PACKAGES: ""  # Optional packages
+  script:
+    - python3 -m venv .venv
+    - source .venv/bin/activate
+    - pip3 install pylic
+    - pip3 install . ${EXTRA_PACKAGES} || true  # installs package only if available
+    - echo "[*] The following packages, with their respective version, will be checked:"
+    - pylic list
+    - pylic check
+  needs: []

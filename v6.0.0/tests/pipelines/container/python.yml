@@ -1,0 +1,15 @@
+---
+include:
+  - local: pipelines/python.yml
+  - local: pipelines/container.yml
+  - local: pipelines/workflow.yml
+
+variables:
+  IMAGE_NAME: ${CI_REGISTRY_IMAGE}/python-pep518
+  IMAGE_CONTEXT: ${CI_PROJECT_DIR}/tests/mockup_projects/python/pep518
+  PYTHON_CONTEXT: tests/mockup_projects/python/pep518
+
+grype:
+  variables:
+    GRYPE_FAIL_ON_THRESHOLD: ""
+  allow_failure: false

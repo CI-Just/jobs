@@ -1,0 +1,19 @@
+---
+# Requires setting NETLIFY_SITE_ID to the site id of the Netlify Site.
+
+include:
+  - remote: https://jobs.just-ci.dev/rhtenhove-main-patch-05418/web/hugo.yml
+  - remote: https://jobs.just-ci.dev/rhtenhove-main-patch-05418/web/netlify.yml
+
+.netlify:
+  extends: .hugo
+
+netlify:
+  script:
+    - !reference [.hugo, script]
+    - !reference [.netlify, script]
+
+netlify:branch:
+  script:
+    - !reference [.hugo, script]
+    - !reference [.netlify, script]

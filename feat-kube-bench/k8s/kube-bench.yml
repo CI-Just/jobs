@@ -1,0 +1,36 @@
+---
+variables:
+  KUBE_BENCH_VERSION: main  # Or use for example v0.6.7 from the available tags on https://github.com/aquasecurity/kube-bench/tags
+  KUBE_BENCH_MANIFEST: kube-bench/job.yaml
+  KUBE_BENCH_MANIFEST_JUNIT: kube-bench/job-junit.yaml
+
+.kube-context:
+  image: registry.gitlab.com/gitlab-org/cluster-integration/cluster-applications:latest
+  before_script:
+    - gl-use-kube-context
+    - chmod 400 $KUBECONFIG  # Removes security warnings. https://gitlab.com/gitlab-org/project-templates/cluster-management/-/merge_requests/51#note_936576634
+
+k8s:kube-bench:
+  stage: .post
+  extends: .kube-context
+  script:
+    - |
+      if ! test -f ${KUBE_BENCH_MANIFEST}; then
+        mkdir -p kube-bench
+        wget -O ${KUBE_BENCH_MANIFEST} https://raw.githubusercontent.com/aquasecurity/kube-bench/${KUBE_BENCH_VERSION}/job.yaml
+      fi
+    - apk add --no-cache yq
+    - yq eval '.spec.template.spec.containers[0].args += ["--junit"]' ${KUBE_BENCH_MANIFEST} > ${KUBE_BENCH_MANIFEST_JUNIT}
+    - yq eval -i '.metadata.name = "kube-bench-junit"' ${KUBE_BENCH_MANIFEST_JUNIT}
+    - kubectl delete -f ${KUBE_BENCH_MANIFEST_JUNIT} -f ${KUBE_BENCH_MANIFEST} --ignore-not-found=true
+    - kubectl apply -f ${KUBE_BENCH_MANIFEST_JUNIT} -f ${KUBE_BENCH_MANIFEST}
+    - kubectl wait -f ${KUBE_BENCH_MANIFEST_JUNIT} -f ${KUBE_BENCH_MANIFEST} --for=condition=complete=true --timeout=5m
+    - kubectl logs -f jobs/kube-bench-junit > kube-bench/kube-bench-junit.xml
+    - kubectl logs -f jobs/kube-bench
+  after_script:
+    - if [ -z ${KUBE_BENCH_KEEP_JOB} ]; then kubectl delete -f ${KUBE_BENCH_MANIFEST} -f ${KUBE_BENCH_MANIFEST_JUNIT}; fi
+  artifacts:
+    reports:
+      junit: kube-bench/kube-bench-junit.xml
+    paths:
+      - kube-bench/

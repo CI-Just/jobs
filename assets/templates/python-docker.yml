@@ -1,0 +1,6 @@
+---
+include:
+  - remote: "https://jobs.just-ci.dev/assets/pipelines/project-automation.yml"
+  - remote: "https://jobs.just-ci.dev/assets/pipelines/workflow.yml"
+  - remote: "https://jobs.just-ci.dev/assets/pipelines/python.yml"
+  - remote: "https://jobs.just-ci.dev/assets/pipelines/docker.yml"

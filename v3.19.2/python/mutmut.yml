@@ -1,0 +1,30 @@
+---
+# mutmut is a tool to perform mutation testing on python
+# https://mutmut.readthedocs.io/en/latest/
+
+# This variable tells the kaniko job to add python testing packages
+# to a separate testing image
+
+python:mutmut:
+  stage: test
+  image: registry.gitlab.com/notno/python-tests
+  script:
+    - pip install .
+    - pip install pytest mutmut
+    - mkdir project && \
+      mv ${PYTHON_PACKAGE} project/ && \
+      mv tests project/ && \
+      cd project
+    - coverage run -m pytest tests
+    - mutmut run \
+        --paths-to-mutate=${PYTHON_PACKAGE} \
+        --tests-dir=tests --use-coverage || true
+    - mutmut junitxml \
+        --suspicious-policy=skipped \
+        --untested-policy=failure > ${CI_PROJECT_DIR}/mutmut-report.xml
+    - mutmut run \
+        --paths-to-mutate=${PYTHON_PACKAGE} \
+        --tests-dir=tests --use-coverage
+  artifacts:
+    reports:
+      junit: mutmut-report.xml

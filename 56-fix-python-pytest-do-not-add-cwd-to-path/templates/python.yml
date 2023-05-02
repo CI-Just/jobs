@@ -1,0 +1,4 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/56-fix-python-pytest-do-not-add-cwd-to-path/pipelines/project-automation.yml
+  - remote: https://jobs.just-ci.dev/56-fix-python-pytest-do-not-add-cwd-to-path/pipelines/python.yml

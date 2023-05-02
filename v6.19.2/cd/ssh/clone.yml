@@ -1,0 +1,11 @@
+---
+clone:
+  extends: .ssh
+  GIT_SUBMODULE_STRATEGY: recursive
+  script:
+    - ssh ${REMOTE_USER}@${REMOTE_HOST} " git config --global user.email
+      'bot@mail.com' && git config --global user.name 'bot' && rm -rf
+      ${CI_PROJECT_NAME} && git clone --recurse-submodules --branch
+      ${CI_COMMIT_REF_NAME} --depth 1
+      https://${DEPLOY_USER}:${DEPLOY_TOKEN}@${CI_SERVER_HOST}/gitlab/${CI_PROJECT_PATH}
+      && exit"

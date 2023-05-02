@@ -1,0 +1,24 @@
+---
+# isort sorts your imports
+# this job will check if your imports follow
+# isort profile=black format, for black compatibility
+# https://github.com/PyCQA/isort
+include:
+  - remote: https://jobs.just-ci.dev/main/python/generic.yml
+
+python:isort:
+  extends: .python:pre
+  variables:
+    JOB_PACKAGE: isort
+  script:
+    - !reference [".python:pre", script]
+    # Bug requires excluded paths to not have spaces, as they cannot be quoted.
+    - |
+      for EXCLUDE_PATH in $(echo "${PYTHON_EXCLUDE_PATHS}" | tr , " "); do
+        SKIP_ARG="${SKIP_ARG} --extend-skip-glob ${EXCLUDE_PATH}"
+      done
+    - isort --version
+    - isort --check --profile=black --diff --color . ${SKIP_ARG} || (echo "[!]
+      Problems found. Run 'isort --profile=black .' in your source directory to
+      fix these." && exit 1)
+  needs: []

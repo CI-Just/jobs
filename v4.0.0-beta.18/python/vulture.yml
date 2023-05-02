@@ -1,0 +1,19 @@
+---
+# https://github.com/jendrikseipp/vulture
+
+variables:
+  PYVERSION: "latest"
+
+image: registry.gitlab.com/notno/ci/images/python:$PYVERSION
+
+python:vulture:
+  stage: test
+  variables:
+    MIN_CONFIDENCE: 100
+    CHECK_PATH: "./${PYTHON_PACKAGE}"
+    DEFAULT_ARGS: "--ignore-names test_* --exclude tests/"
+  script:
+    - echo "will run test on PYTHON_PACKAGE=${PYTHON_PACKAGE}"
+    - pip3 install . || true  # installs package only if available
+    - pip3 install vulture
+    - python3 -m vulture --min-confidence ${MIN_CONFIDENCE} ${CHECK_PATH}

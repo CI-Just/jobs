@@ -1,0 +1,16 @@
+---
+include:
+  - remote: "https://gitlab.com/just-ci/templates/-/raw/v6.0.1/python/generic.yml"
+
+python:flake8:
+  stage: test
+  variables:
+    DEFAULT_ARGS:
+      --max-line-length=88 --extend-ignore=E203 --max-complexity=10
+      --extend-exclude="${PYTHON_EXCLUDE_PATHS}" --show-source --statistics
+    EXTRA_ARGS: ""
+    PACKAGE: flake8
+  script:
+    - !reference [".python:pre", script]
+    - pip3 install . || true # installs package only if available
+    - flake8 ${DEFAULT_ARGS} ${EXTRA_ARGS} .

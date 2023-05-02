@@ -1,0 +1,17 @@
+---
+# safety checks your installed python dependencies for known
+# security vulnerabilities
+# https://pypi.org/project/safety/
+
+variables:
+  PYVERSION: "latest"
+
+python:safety:
+  stage: test
+  image: registry.gitlab.com/just-ci/images/python:$PYVERSION
+  script:
+    - python3 -m venv .venv
+    - source .venv/bin/activate
+    - pip3 install safety
+    - pip3 install . || true # installs package only if available
+    - safety check

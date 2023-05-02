@@ -1,0 +1,21 @@
+---
+include:
+    - local: pipelines/python.yml
+    - local: pipelines/docker.yml
+    - local: pipelines/workflow.yml
+
+variables:
+    MOCKUP_PROJECT: pep518-docker
+    PYTHON_PACKAGE: mypackage518
+    KANIKO_REGISTRY_IMAGE: ${CI_REGISTRY_IMAGE}/${MOCKUP_PROJECT}
+    KANIKO_CONTEXT: ${CI_PROJECT_DIR}/tests/mockup_projects/python/pep518/
+    KANIKO_DOCKERFILE: ${CI_PROJECT_DIR}/tests/mockup_projects/python/pep518/Dockerfile
+
+before_script:
+    - cd tests/mockup_projects/python/pep518
+
+image: ${CI_REGISTRY_IMAGE}/${MOCKUP_PROJECT}:dev-${CI_COMMIT_SHORT_SHA}
+
+grype:
+    variables:
+        GRYPE_FAIL_ON: ""

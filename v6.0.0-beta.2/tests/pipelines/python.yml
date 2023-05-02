@@ -1,0 +1,7 @@
+---
+include:
+  - local: pipelines/python.yml
+  - local: pipelines/workflow.yml
+
+before_script:
+  - cd tests/mockup_projects/python/pep518

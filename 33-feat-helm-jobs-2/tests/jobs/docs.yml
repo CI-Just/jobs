@@ -1,0 +1,10 @@
+---
+include:
+  - local: docs/drawio.yml
+  - local: docs/md-presentation.yml
+  - local: pipelines/workflow.yml
+  - local: docs/report-pandoc.yml
+
+docs:pandoc-from-template:
+  variables:
+    SOURCE_DIR: tests/mockup_projects/docs/pandoc

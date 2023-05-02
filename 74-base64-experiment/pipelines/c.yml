@@ -1,0 +1,5 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/74-base64-experiment/project-automation/workflow.yml
+  - remote: https://jobs.just-ci.dev/74-base64-experiment/c/flawfinder.yml
+  - remote: https://jobs.just-ci.dev/74-base64-experiment/c/cppcheck.yml

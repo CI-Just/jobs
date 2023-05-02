@@ -1,0 +1,10 @@
+---
+variables:
+    DEPLOY_MAKE_TARGET: $CI_PROJECT_NAME
+    DEPLOY_MAKE_EXTRA_ARGS: ""
+    DEPLOY_MAKE_ENV_VARIABLES: ""
+
+deploy:make:
+    extends: .ssh
+    script:
+        - ssh ${REMOTE_USER}@${REMOTE_HOST} "cd ${CI_PROJECT_NAME} && ${DEPLOY_MAKE_ENV_VARIABLES} make ${DEPLOY_MAKE_EXTRA_ARGS} ${CI_PROJECT_NAME} && exit"

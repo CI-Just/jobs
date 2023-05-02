@@ -1,0 +1,26 @@
+---
+python:poetry:publish:
+  image: registry.gitlab.com/notno/python-tests
+  stage: .post
+  script:
+    - |
+      if ! poetry shell >/dev/null; then
+        PYTHON_PROJECT_VERSION=$(dasel select -f pyproject.toml "tool.poetry.dependencies.python")
+        echo "[-] Your python version $PYTHON_PROJECT_VERSION is not available in this image. Will install it now."
+        apt-get update && apt-get install -y build-essential libssl-dev zlib1g-dev libbz2-dev \
+        libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev \
+        xz-utils tk-dev libffi-dev liblzma-dev python-openssl git
+        pyenv install $PYTHON_PROJECT_VERSION
+        export PATH=/root/.pyenv/versions/${PYTHON_PROJECT_VERSION}/bin:${PATH}
+        poetry shell
+      fi
+    - poetry config repositories.repo \
+        "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi"
+    - poetry config http-basic.repo gitlab-ci-token ${CI_JOB_TOKEN}
+    - |
+      if [ -z $CI_COMMIT_TAG ]; then
+        echo "[-] Only doing a dry run. This will publish when run in a tagged pipeline."
+        poetry publish --build --dry-run -r repo
+      else
+        poetry publish --build -r repo
+      fi

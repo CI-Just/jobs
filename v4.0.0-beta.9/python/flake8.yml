@@ -1,0 +1,13 @@
+---
+image: registry.gitlab.com/notno/ci/images/python:latest
+
+python:flake8:
+  stage: test
+  variables:
+    CHECK_PATH: "./${PYTHON_PACKAGE}"
+    DEFAULT_ARGS: "--max-line-length=88 --extend-ignore=E203 --max-complexity=10 --extend-exclude=tests/ --show-source --statistics"
+    EXTRA_ARGS: ""
+  script:
+    - pip3 install . ${EXTRA_PACKAGES} || true  # installs package only if available
+    - pip3 install flake8
+    - flake8 ${DEFAULT_ARGS} ${EXTRA_ARGS} ${CHECK_PATH} && echo "[+] No problems found. Well done!"

@@ -1,0 +1,28 @@
+---
+# pylint checks the quality of your code
+# https://www.pylint.org
+
+# Use pyproject.toml to configure pylint. For example:
+# [tool.pylint.messages_control]
+# disable = ["C0114", "C0115", "unsubscriptable-object", "too-many-lines"]
+
+# This variable tells the kaniko job to add
+# python testing packages to a separate testing image
+variables:
+  PYTHON_TEST: "true"
+
+python:pylint:
+  variables:
+    PYLINT_THRESHOLD: "6"
+    CHECK_PATH: "./${PYTHON_PACKAGE}"
+    EXTRA_ARGS: ""
+  stage: test
+  image: ${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_NAME}-testing
+  script:
+    - pip show pylint
+    - echo "pylint needs at least a score of ${PYLINT_THRESHOLD} for this job to pass."  # yamllint disable rule:line-length
+    - pylint --output-format=pylint_junit.JUnitReporter $(find ${CHECK_PATH} -type f -name '*.py' -print) > ${CI_PROJECT_DIR}/pylint-report.xml || true  # yamllint disable-line rule:line-length
+    - pylint ${EXTRA_ARGS} --output-format=colorized --fail-under ${PYLINT_THRESHOLD} $(find ${CHECK_PATH} -type f -name '*.py' -print)  # yamllint disable rule:line-length
+  artifacts:
+    reports:
+      junit: pylint-report.xml

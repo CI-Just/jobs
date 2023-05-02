@@ -1,0 +1,53 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/v6.18.0/project-automation/telemetry.yml
+
+variables:
+  PYVERSION: slim
+  PYTHON_EXCLUDE_PATHS: tests,setup.py,migrations
+  PYTHON_EXCLUDE_REGEX: (tests|setup.py|migrations)
+  PIP_DISABLE_PIP_VERSION_CHECK: "true"
+  PIP_ROOT_USER_ACTION: ignore
+  PIP_PACKAGE_INSTALL_DEFAULT_ARGS: --no-input -qqq
+  PIP_PACKAGE_INSTALL_EXTRA_ARGS: ""
+
+image:
+  name: registry.gitlab.com/just-ci/images/python:$PYVERSION
+  entrypoint: [""]
+
+.python:pre:
+  extends: .telemetry
+  image:
+    name: registry.gitlab.com/just-ci/images/python:$PYVERSION
+    entrypoint: [""]
+  stage: test
+  script:
+    - pip3 --version
+    - pip3 install -q --log=${CI_PROJECT_DIR}/pip-log.txt ${JOB_PACKAGE} && echo
+      "[+] ${JOB_PACKAGE} installed."
+    - |
+      echo "[*] Job info:"
+      echo "Context path: ${PYTHON_CONTEXT:=.}"
+      echo "User package: ${PYTHON_PACKAGE:-(not specified)}"
+      echo "Excluded paths: ${PYTHON_EXCLUDE_PATHS:-(not specified)}"
+      echo "Excluded regex: ${PYTHON_EXCLUDE_REGEX:-(not specified)}"
+    - cd ${PYTHON_CONTEXT}
+  artifacts:
+    paths:
+      - pip-log.txt
+    when: always
+
+.python:pre-install:
+  extends: .telemetry
+  stage: test
+  script:
+    - |
+      echo "[*] Installing your package using these arguments: ${PIP_PACKAGE_INSTALL_DEFAULT_ARGS} ${PIP_PACKAGE_INSTALL_EXTRA_ARGS}."
+      pip3 --version
+      pip3 install ${PIP_PACKAGE_INSTALL_DEFAULT_ARGS} ${PIP_PACKAGE_INSTALL_EXTRA_ARGS} --log=${CI_PROJECT_DIR}/pip-log.txt . || \
+        (echo "[-] Failed to install your package. Will continue without installation. This may omit test results which require installation." && \
+        echo "[-] To debug you can check 'pip-log.txt' in the job artifacts.")
+  artifacts:
+    paths:
+      - pip-log.txt
+    when: always

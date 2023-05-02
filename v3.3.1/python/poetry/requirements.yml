@@ -1,0 +1,17 @@
+# Generates requirements.txt and requirements-dev.txt based on the content of
+# your pyproject.toml file.
+# It is preferred to first copy your package and then use `pip install .` in
+# your Dockerfile instead of using this job.
+
+python:poetry:requirements:
+  stage: .pre
+  image: registry.gitlab.com/notno/python-tests:latest
+  script:
+    - poetry config virtualenvs.create false
+    - poetry export --without-hashes --output requirements.txt
+    - echo "The following is in requirements.txt" && cat requirements.txt
+    - poetry export --dev --without-hashes --output requirements-dev.txt
+    - echo "The following is in requirements-dev.txt:" && cat requirements-dev.txt
+  artifacts:
+    paths:
+      - requirements*.txt

@@ -1,0 +1,11 @@
+---
+workflow:
+  rules:
+    # Run if we're in a merge request
+    - if: $CI_MERGE_REQUEST_IID
+    # Run for tags, so we get semantic versioning
+    - if: $CI_COMMIT_TAG
+    # Run for changes on the master branch (so merged MRs)
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    # Run for manually triggered jobs from gitlab UI
+    - if: $CI_PIPELINE_SOURCE == 'web'

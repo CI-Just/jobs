@@ -1,0 +1,48 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/rhtenhove-main-patch-36831/k8s/generic.yaml
+
+variables:
+  HELM_DEPLOY_DEFAULT_ARGS:
+    --install --create-namespace --dependency-update --atomic --wait-for-jobs
+    --render-subchart-notes
+  HELM_DEPLOY_EXTRA_ARGS: ""
+
+.helm:
+  script:
+    - |
+      if test -f "${K8S_CONFIG_DIR}/values.yaml"; then
+        HELM_DEPLOY_EXTRA_ARGS="${HELM_DEPLOY_EXTRA_ARGS} -f ${K8S_CONFIG_DIR}/values.yaml"
+      fi
+    - |
+      echo "[*] Will helm with the following variables:
+      Helm repo name: ${REPO_NAME}
+      Helm repo URL:  ${REPO_URL}
+      Chart:          ${CHART}
+      Release:        ${RELEASE}
+      Config dir:     ${K8S_CONFIG_DIR}
+      Arguments:      ${HELM_DEPLOY_DEFAULT_ARGS} ${HELM_DEPLOY_EXTRA_ARGS}
+      Namespace:      ${NAMESPACE:=default}"
+    - helm repo add ${REPO_NAME} ${REPO_URL}
+
+.helm:render:
+  extends: .kube
+  stage: test
+  script:
+    - !reference [.helm, script]
+    - helm template ${REPO_NAME} ${CHART} ${VALUES_ARG} --namespace
+      ${NAMESPACE:=default} --output-dir rendered
+  artifacts:
+    paths:
+      - rendered
+    when: always
+
+.helm:deploy:
+  extends: .kube-context
+  script:
+    - !reference [.kube-context, script]
+    - !reference [.helm, script]
+    - helm upgrade ${HELM_DEPLOY_DEFAULT_ARGS} --namespace ${NAMESPACE:=default}
+      ${RELEASE} ${CHART} ${VALUES_ARG} ${HELM_DEPLOY_EXTRA_ARGS}
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH

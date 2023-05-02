@@ -1,0 +1,22 @@
+---
+include:
+  - local: python/collections/all.yml
+  - local: project-automation/workflow.yml
+
+variables:
+  PYTHON_CONTEXT: tests/mockup_projects/python/pep518
+
+python:build:setuptools:
+  extends: python:build
+  variables:
+    PYTHON_CONTEXT: tests/mockup_projects/python/setuptools
+
+python:build:36:
+  image: registry.gitlab.com/just-ci/images/python:3.6-slim
+  extends: python:build
+  variables:
+    PYTHON_CONTEXT: tests/mockup_projects/python/needs36
+
+python:twine:
+  rules:
+    - when: never

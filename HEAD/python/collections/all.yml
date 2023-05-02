@@ -1,0 +1,7 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/HEAD/python/collections/quality.yml
+  - remote: https://jobs.just-ci.dev/HEAD/python/collections/release.yml
+  - remote: https://jobs.just-ci.dev/HEAD/python/collections/security.yml
+  - remote: https://jobs.just-ci.dev/HEAD/python/collections/style.yml
+  - remote: https://jobs.just-ci.dev/HEAD/python/pip-licenses.yml

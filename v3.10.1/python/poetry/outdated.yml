@@ -1,0 +1,17 @@
+---
+# Checks for dependencies that are not up to date.
+# We always allow failure, because it shouldn't be
+# a blocking problem. Sometimes you just want the
+# good old stuff.
+
+python:poetry:outdated:
+  stage: test
+  image: registry.gitlab.com/notno/python-tests
+  script:
+    - poetry install
+    - |
+      if poetry show --ansi --outdated | \grep -P ' \e\[31m' --color=never; then
+        echo "[!] You have outdated packages. Run 'poetry update' in your repository."
+        exit 1
+      fi
+  allow_failure: true

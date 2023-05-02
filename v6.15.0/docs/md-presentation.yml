@@ -1,0 +1,78 @@
+---
+# Running a local webserver of MARP is as easy as:
+# docker run --rm -ti -p 127.0.0.1:8080:8080 -v "${PWD}:/pwd" -w /pwd docker.io/marpteam/marp-cli:latest -s .
+
+# This currently assumes a single presentation. Having more will probably work fine, but may provide unexpected results.
+include:
+  - remote: https://jobs.just-ci.dev/v6.15.0/project-automation/telemetry.yml
+
+docs:md-presentation:
+  extends: .telemetry
+  image:
+    name: docker.io/marpteam/marp-cli:latest
+    entrypoint: [""]
+  stage: build
+  variables:
+    CONVERSION_PATH: "."
+    DEFAULT_ARGS: --allow-local-files
+    EXTRA_ARGS: ""
+  script:
+    - apk add zip
+    - export PATH=${PATH}:/home/marp/.cli
+    - mkdir -p ${CI_PROJECT_DIR}/output
+
+    # First the HTML export
+    - marp-cli.js -I ${CONVERSION_PATH} ${DEFAULT_ARGS} ${EXTRA_ARGS} 2>&1 | tee
+      /tmp/output.log
+    - OUTPUT_FILES=$(cat /tmp/output.log | grep "=>" | cut -d">" -f2 | cut -d" "
+      -f2)
+    - zip -r ${CI_PROJECT_DIR}/output/html.zip *.* -x *.md -x
+      ${CI_PROJECT_DIR}/output
+    - rm ${OUTPUT_FILES}
+    - unzip ${CI_PROJECT_DIR}/output/html.zip -d ${CI_PROJECT_DIR}/html-output
+    - HTML_FILENAME=$(basename $(ls ${CI_PROJECT_DIR}/html-output/*.html | head
+      -n1))
+    - echo
+      "HTML=${CI_PROJECT_URL}/-/jobs/${CI_JOB_ID}/artifacts/file/html-output/${HTML_FILENAME}"
+      > ${CI_PROJECT_DIR}/links.env
+    - echo
+      "HTML_ZIP=${CI_PROJECT_URL}/-/jobs/${CI_JOB_ID}/artifacts/raw/output/html.zip"
+      >> ${CI_PROJECT_DIR}/links.env
+
+    # Next the images export
+    - marp-cli.js --images -I ${CONVERSION_PATH} ${DEFAULT_ARGS} ${EXTRA_ARGS}
+      2>&1 | tee /tmp/output.log
+    - OUTPUT_FILES=$(cat /tmp/output.log | grep "=>" | cut -d">" -f2 | cut -d" "
+      -f2)
+    - zip -r ${CI_PROJECT_DIR}/output/images.zip *.png -x *.md -x
+      ${CI_PROJECT_DIR}/output
+    - rm ${OUTPUT_FILES}
+    - echo
+      "IMAGES=${CI_PROJECT_URL}/-/jobs/${CI_JOB_ID}/artifacts/raw/output/images.zip"
+      >> ${CI_PROJECT_DIR}/links.env
+
+    # Finally the PDF and PPTX
+    - |
+      for FORMAT_ARG in --pdf-notes --pptx; do
+        marp-cli.js ${FORMAT_ARG} -I ${CONVERSION_PATH} ${DEFAULT_ARGS} ${EXTRA_ARGS} 2>&1 | tee /tmp/output.log
+        OUTPUT_FILES=$(cat /tmp/output.log | grep "=>" | cut -d">" -f2 | cut -d" " -f2)
+        mv ${OUTPUT_FILES} ${CI_PROJECT_DIR}/output/
+      done
+
+    - |
+      for FILE in ${CI_PROJECT_DIR}/output/*; do
+        BASENAME=$(basename ${FILE})
+        echo -e "[+] Get \033[1m${BASENAME}\033[0m from ${CI_PROJECT_URL}/-/jobs/${CI_JOB_ID}/artifacts/raw/output/${BASENAME}"
+        EXT=$(echo "${BASENAME##*.}" | tr a-z A-Z)
+        if [ "${EXT}" != "ZIP" ]; then
+          echo "${EXT}=${CI_PROJECT_URL}/-/jobs/${CI_JOB_ID}/artifacts/raw/output/${BASENAME}" >> ${CI_PROJECT_DIR}/links.env
+        fi
+      done
+      echo -e "[+] View \033[1m${HTML_FILENAME}\033[0m from ${CI_PROJECT_URL}/-/jobs/${CI_JOB_ID}/artifacts/file/html-output/${HTML_FILENAME}"
+  artifacts:
+    when: always
+    paths:
+      - output
+      - html-output
+    reports:
+      dotenv: links.env

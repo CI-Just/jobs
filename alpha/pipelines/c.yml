@@ -1,0 +1,9 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/alpha/project-automation/workflow.yml
+  - remote: "https://jobs.just-ci.dev/alpha/python/flawfinder.yml"
+  - remote: "https://jobs.just-ci.dev/alpha/c/cppcheck.yml"
+
+variables:
+  FLAWFINDER_ERROR_LEVEL: "3"
+  DIRECTORIES: "."

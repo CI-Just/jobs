@@ -1,0 +1,52 @@
+---
+# https://wily.readthedocs.io/en/latest/
+# this job uses `wily diff` to provide code
+# quality/complexity metrics for python projects
+# you can use it to evaluate progress while refactoring a project...
+# or to evaluate complexity/maintainability changes introduced by a MR
+
+# DEPRECATED
+
+.python:wily:
+  stage: test
+  image: registry.gitlab.com/notno/python-tests
+  variables:
+    CHECK_PATH: "./${PYTHON_PACKAGE}"
+    EXTRA_PATHS: ""
+    EXTRA_ARGS: ""
+    DEFAULT_OPTIONS: "-c --detail"
+    EXTRA_OPTIONS: ""  # Add --all to show the metrics of all files
+    DEFAULT_METRICS: "--metrics maintainability.rank,maintainability.mi,halstead.effort,cyclomatic.complexity,raw.loc,raw.single_comments"
+    EXTRA_METRICS: ""  # Start with a comma, and leave no comma between metrics
+    GIT_STRATEGY: clone
+    GIT_CHECKOUT: "false"
+  script:
+    - echo "[!] THIS JOB IS DEPRECATED AND NO LONGER MAINTAINED."
+    - echo "Preparing environment"
+    - git fetch 1>/dev/null 2>&1
+    - git checkout ${CI_COMMIT_REF_NAME} 1>/dev/null 2>&1
+    - wily build ${CHECK_PATH} 1>/dev/null 2>&1
+    - |
+      wily ${EXTRA_ARGS} diff ${DEFAULT_OPTIONS} ${EXTRA_OPTIONS} ${CHECK_PATH} ${EXTRA_PATHS} -r HEAD^1 ${DEFAULT_METRICS}${EXTRA_METRICS} > wily_head-1_compared
+      if [ -s wily_head-1_compared ]; then
+        echo "Comparison between your current commit and the previous commit:"
+        cat wily_head-1_compared
+      else
+        echo "No difference in metrics compared to the previous commit."
+      fi
+    - |
+      wily ${EXTRA_ARGS} diff ${DEFAULT_OPTIONS} ${EXTRA_OPTIONS} ${CHECK_PATH} ${EXTRA_PATHS} -r origin/master ${DEFAULT_METRICS}${EXTRA_METRICS} > wily_master_compared
+      if [ -s wily_master_compared ]; then
+        echo "Comparison between your current commit and the master branch:"
+        cat wily_master_compared
+      else
+        echo "No difference in metrics compared to master."
+      fi
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - when: always
+  needs: []
+
+python:wily:
+  extends: .python:wily

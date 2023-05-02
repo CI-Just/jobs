@@ -1,0 +1,151 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/HEAD/project-automation/telemetry.yml
+.gitlab:schedule-pipelines:
+  extends: .telemetry
+  stage: deploy
+  image:
+    name: registry.gitlab.com/just-ci/images/python:alpine
+    entrypoint: [""]
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - |-
+      python - << EOF
+      import os
+      import subprocess
+      import sys
+      from typing import Dict, List
+
+      install_cmd = f"{sys.executable} -m pip install -q python-gitlab"
+      subprocess.run(install_cmd.split(), check=True)
+      import gitlab
+      from gitlab.base import RESTObject
+      from gitlab.exceptions import GitlabAuthenticationError
+
+      no_error = True
+
+      data = {
+          "ref": os.getenv("CI_DEFAULT_BRANCH"),
+          "description": os.getenv("SCHEDULE_PIPELINE_DESCRIPTION", "Default"),
+          "cron": os.getenv("SCHEDULE_PIPELINE_CRON", "0 1 * * *"),
+          "cron_timezone": os.getenv("TZ", "UTC"),
+      }
+      project_ids = os.getenv(
+          "SCHEDULE_PIPELINE_PROJECT_IDS", os.getenv("CI_PROJECT_ID")
+      ).split(" ")
+
+      print(f"Project IDs: {' '.join(project_ids)}")
+      print(f"Description: {data['description']}")
+      print(f"Cron: {data['cron']}")
+      print(f"Timezone: {data['cron_timezone']}")
+
+      user_variables = list()
+      if variables := os.getenv("SCHEDULE_PIPELINE_VARIABLES"):
+          for variable in variables.splitlines():
+              print(f"User variable: {variable}")
+              key, value = variable.split("=", 1)
+              user_variables.append({"key": key, "value": value, "variable_type": "env_var"})
+
+      gl = gitlab.Gitlab(private_token=os.getenv("GL_TOKEN"))
+
+      try:
+          gl.auth()
+      except GitlabAuthenticationError:
+          print("[!] Could not authenticate. Is your GL_TOKEN correct?")
+          sys.exit(1)
+
+
+      def check_variables(current_variables: List[Dict[str, str]]) -> bool:
+          new_variables = [
+              {
+                  "key": "AUTO_SCHEDULED",
+                  "value": "true",
+                  "variable_type": "env_var",
+              }
+          ] + user_variables
+          return new_variables == current_variables
+
+
+      def check_ownership(schedule: RESTObject, project: RESTObject) -> bool:
+          if os.getenv("DISABLE_SCHEDULE_OWNERSHIP_WARNING"):
+              print("[-] Not checking ownership.")
+              return True
+          GL_TOKEN_user = gl.users.list(username=gl.user.username)[0]
+          if schedule.attributes["owner"]["id"] == GL_TOKEN_user.id:
+              print(
+                  "[!] The schedule is owned by the GL_TOKEN user named "
+                  f"'{GL_TOKEN_user.name}' with username '{GL_TOKEN_user.username}', "
+                  "so you probably will not receive any warnings of pipeline failures."
+              )
+              print(
+                  f"Go here and take ownership: {project.attributes['web_url']}/-/pipeline_schedules"
+              )
+              print(
+                  "Or disable this warning by setting a variable called DISABLE_SCHEDULE_OWNERSHIP_WARNING to 'true'."
+              )
+              return False
+          return True
+
+
+      def process_schedule(
+          schedule: RESTObject, already_exists: bool, project: RESTObject
+      ) -> bool:
+          global no_error
+          schedule = project.pipelineschedules.get(schedule.get_id())
+          attrs = schedule.attributes
+          variable_values = [key["key"] for key in attrs["variables"]]
+          attrs_data = {
+              "ref": attrs["ref"],
+              "description": attrs["description"],
+              "cron": attrs["cron"],
+              "cron_timezone": attrs["cron_timezone"],
+          }
+
+          if (
+              attrs["description"] == data["description"]
+              and "AUTO_SCHEDULED" in variable_values
+          ):
+              if already_exists:
+                  print("[-] Duplicate schedule found. Deleting.")
+                  schedule.delete()
+              if attrs_data == data and check_variables(attrs["variables"]):
+                  print("[+] Existing matching schedule found. Skipping.")
+                  no_error = check_ownership(schedule, project)
+                  already_exists = True
+              else:
+                  print(
+                      f"[-] Outdated schedule found. Deleting before creating new schedule."
+                  )
+                  schedule.delete()
+          return already_exists
+
+
+      for project_id in project_ids:
+          already_exists = False
+          project = gl.projects.get(project_id)
+
+          current_schedules = project.pipelineschedules.list()
+
+          for schedule in current_schedules:
+              already_exists = process_schedule(schedule, already_exists, project)
+
+          if not already_exists:
+              print("[+] Creating new schedule")
+              schedule = project.pipelineschedules.create(data)
+              schedule.variables.create({"key": "AUTO_SCHEDULED", "value": "true"})
+              for variable in user_variables:
+                  schedule.variables.create(
+                      {"key": variable["key"], "value": variable["value"]}
+                  )
+              no_error = check_ownership(schedule, project)
+
+      if not no_error:
+          sys.exit(1)
+      EOF
+  allow_failure: true
+  needs: []
+  rules:
+    - if: $GL_TOKEN
+gitlab:schedule-pipelines:
+  extends: .gitlab:schedule-pipelines

@@ -1,0 +1,41 @@
+---
+pages:
+  stage: build
+  image:
+    name: docker.io/alpine/git:latest
+    entrypoint: [""]
+  variables:
+    GIT_STRATEGY: clone
+  script:
+    - |
+      if [ "$(git rev-parse --is-shallow-repository)" != "false" ]; then
+        echo "[*] Repository is shallow. Unshallowing."
+        git fetch --unshallow -q
+      fi
+    - apk add -q grep
+    - GIT_TAGS=$(git tag --format "%(refname:strip=1)") # Produces list with 'tags/' prefix
+    - GIT_BRANCHES=$(git branch -r --format "%(refname:strip=3)")
+    - mkdir -p /tmp/public
+    - |
+      for GIT_REF in ${GIT_TAGS} ${GIT_BRANCHES}; do
+        printf "[*] Processing ${GIT_REF}..."
+        git checkout ${GIT_REF} -q
+
+        FILES=$(grep -rl "\- local: " . --exclude-dir=tests --exclude=.gitlab-ci.yml --exclude=pages-templates.yaml)
+        printf "$(echo ${FILES} | wc -w) file(s)..."
+
+        GIT_REF_NAME=${GIT_REF#tags/}
+        echo ${FILES} | xargs sed -i "s|- local: \"|- remote: \"${CI_PAGES_URL}/${GIT_REF_NAME}/|g"
+        echo ${FILES} | xargs sed -i "s|- local: |- remote: ${CI_PAGES_URL}/${GIT_REF_NAME}/|g"
+        cp -r . /tmp/public/${GIT_REF_NAME}
+
+        git reset --hard -q
+        echo "done."
+      done
+    - echo "[*] Publishing $(echo $GIT_TAGS | wc -w) tags and $(echo
+      $GIT_BRANCHES | wc -w) branches to ${CI_PAGES_URL}..."
+    - mv /tmp/public ${CI_PROJECT_DIR}/public
+  needs: []
+  artifacts:
+    paths:
+      - public

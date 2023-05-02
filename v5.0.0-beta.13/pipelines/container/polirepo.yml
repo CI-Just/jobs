@@ -1,0 +1,9 @@
+---
+include:
+  - remote: "https://jobs.just-ci.dev/v5.0.0-beta.13/container/kaniko.yml"
+  - remote: "https://jobs.just-ci.dev/v5.0.0-beta.13/container/grype.yml"
+
+# set the project container dev image to the image for all jobs without a job-level default image
+image:
+  name: ${KANIKO_REGISTRY_IMAGE}:${KANIKO_DEV_TAG}
+  entrypoint: [""]

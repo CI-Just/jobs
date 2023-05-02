@@ -1,0 +1,19 @@
+---
+# Check the package page on how to configure this job
+# https://github.com/sandrochuber/pylic
+include:
+  - remote: https://jobs.just-ci.dev/v6.10.1/python/generic.yml
+  - remote: https://jobs.just-ci.dev/v6.10.1/python/install-extras.yml
+
+python:pylic:
+  extends: .python:install-extras
+  variables:
+    JOB_PACKAGE: pip-licenses
+  script:
+    # isolate installation to ignore licenses of pre-installed packages
+    - python3 -m venv .venv
+    - source .venv/bin/activate
+    - !reference [".python:pre", script]
+    - !reference [".python:install-extras", script]
+    - pylic list
+    - pylic check

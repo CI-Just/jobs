@@ -1,0 +1,14 @@
+---
+include:
+  - remote: "https://jobs.just-ci.dev/16-fix-enhance-grype-job/container/kaniko.yml"
+  - remote: "https://jobs.just-ci.dev/16-fix-enhance-grype-job/container/grype.yml"
+
+# skips default polirepo job inherited
+kaniko:
+  rules:
+    - when: never
+
+# skips default polirepo job inherited
+grype:
+  rules:
+    - when: never

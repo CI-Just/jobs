@@ -1,0 +1,5 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/56-fix-python-pytest-do-not-add-cwd-to-path/python/mypy.yml
+  - remote: https://jobs.just-ci.dev/56-fix-python-pytest-do-not-add-cwd-to-path/python/pylint.yml
+  - remote: https://jobs.just-ci.dev/56-fix-python-pytest-do-not-add-cwd-to-path/python/pytest.yml

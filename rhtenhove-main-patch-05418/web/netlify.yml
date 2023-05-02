@@ -1,0 +1,33 @@
+---
+variables:
+  NETLIFY_DEFAULT_ARGS: --site ${NETLIFY_SITE_ID} --auth ${NETLIFY_AUTH_TOKEN}
+
+.netlify:
+  image:
+    name: registry.gitlab.com/just-ci/images/hugo:latest
+    entrypoint: [""]
+  script:
+    - netlify --version
+    - netlify deploy ${NETLIFY_DEPLOY_ARGS} ${NETLIFY_DEFAULT_ARGS}
+      ${NETLIFY_EXTRA_ARGS}
+
+netlify:
+  extends: .netlify
+  variables:
+    NETLIFY_DEPLOY_ARGS: --prod
+  rules:
+    - if:
+        "$CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH && $NETLIFY_AUTH_TOKEN &&
+        $NETLIFY_SITE_ID"
+
+netlify:branch:
+  extends: .netlify
+  variables:
+    NETLIFY_DEPLOY_ARGS: --alias "${CI_COMMIT_REF_SLUG}"
+  rules:
+    - if:
+        "$CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH && $NETLIFY_AUTH_TOKEN &&
+        $NETLIFY_SITE_ID"
+  environment:
+    name: ${CI_COMMIT_REF_SLUG}
+    url: ${CI_COMMIT_REF_SLUG}--${NETLIFY_SITE_ID}.netlify.app

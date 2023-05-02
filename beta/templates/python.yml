@@ -1,0 +1,4 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/beta/pipelines/project-automation.yml
+  - remote: https://jobs.just-ci.dev/beta/pipelines/python.yml

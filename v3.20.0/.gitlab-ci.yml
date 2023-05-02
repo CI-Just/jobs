@@ -1,0 +1,93 @@
+---
+# CI of ci/templates itself
+
+stages:
+  - test
+  - jobs
+  - pipelines
+  - pre-release
+
+include:
+  - local: pipelines/project-automation.yml
+  - local: pipelines/workflow.yml
+  - local: yaml/yamllint.yml
+
+gitlab:recommended:
+  variables:
+    AUTO_FIX: "true"
+
+tbump:
+  stage: pre-release
+
+# child pipeline to unit tests all our jobs
+
+jobs:c:
+  stage: jobs
+  trigger:
+    include:
+      - local: tests/jobs/c.yml
+    strategy: depend
+
+jobs:docker:
+  stage: jobs
+  trigger:
+    include:
+      - local: tests/jobs/docker.yml
+    strategy: depend
+
+jobs:docs:
+  stage: jobs
+  trigger:
+    include:
+      - local: tests/jobs/docs.yml
+    strategy: depend
+
+jobs:python:
+  stage: jobs
+  trigger:
+    include:
+      - local: tests/jobs/python.yml
+    strategy: depend
+
+# downstream multi project pipelines that test one job
+
+downstream:pages:
+  stage: jobs
+  trigger:
+    project: ci/tests/pages
+    strategy: depend
+
+downstream:pandoc:
+  stage: jobs
+  trigger:
+    project: template/report
+    strategy: depend
+
+# child pipelines to test our off-the-shelves pipelines
+pipelines:c:
+  stage: pipelines
+  trigger:
+    include:
+      - local: tests/pipelines/c.yml
+    strategy: depend
+
+pipelines:docker:
+  stage: pipelines
+  trigger:
+    include:
+      - local: tests/pipelines/docker.yml
+    strategy: depend
+
+pipelines:python:
+  stage: pipelines
+  trigger:
+    include:
+      - local: tests/pipelines/python.yml
+    strategy: depend
+
+pipelines:python&docker:
+  stage: pipelines
+  trigger:
+    include:
+      - local: tests/pipelines/python-docker.yml
+    strategy: depend

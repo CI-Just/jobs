@@ -1,0 +1,5 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/rhtenhove-main-patch-12920/project-automation/workflow.yml
+  - remote: https://jobs.just-ci.dev/rhtenhove-main-patch-12920/c/flawfinder.yml
+  - remote: https://jobs.just-ci.dev/rhtenhove-main-patch-12920/c/cppcheck.yml

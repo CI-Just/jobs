@@ -1,0 +1,22 @@
+# https://github.com/python/mypy
+
+variables:
+  PYTHON_TEST: "true"
+
+python:mypy:
+  stage: test
+  image: registry.gitlab.com/notno/python-tests
+  variables:
+    CHECK_PATH: "./${PYTHON_PACKAGE}"
+    DEFAULT_SETTINGS: "--strict --ignore-missing-imports --pretty --show-error-context"  # Override this for special needs
+    EXTRA_SETTINGS: ""  # Use this to add your settings to the default
+  script:
+    - mypy ${DEFAULT_SETTINGS} ${EXTRA_SETTINGS} --junit-xml mypy-report.xml ${CHECK_PATH}
+  artifacts:
+    reports:
+      junit: mypy-report.xml
+  cache:
+    key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
+    paths:
+      - .mypycache/
+  needs: []

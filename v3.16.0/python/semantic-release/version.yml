@@ -1,0 +1,22 @@
+---
+python:semantic-release:version:
+  image: registry.gitlab.com/notno/python-tests:latest
+  stage: build
+  script:
+    - pip install python-semantic-release
+    # 1. semantic release will bump versions in files -> we want this
+    # 2. THEN it will try to commit to git -> we don't want this! -> we let it fail and hide the output
+    - env -u GIT_AUTHOR_NAME -u GIT_AUTHOR_EMAIL -u GIT_COMMITTER_NAME -u GIT_COMMITTER_EMAIL semantic-release version &>/dev/null || true
+    - CHANGED_FILES=$(git diff --cached --name-status | cut -f2)
+    - |
+      if [ ! -z "${CHANGED_FILES}" ]; then
+        echo -e "[+] The following files had their version changed:\n${CHANGED_FILES}"
+      else
+        echo "[!] No files were changed during versioning."
+      fi
+    # 3. all changed files are passed as artifacts to the next stages
+  artifacts:
+    paths:
+      - ./*
+    exclude:
+      - .git

@@ -1,0 +1,14 @@
+---
+variables:
+  PYVERSION: "latest"
+
+python:build:
+  image: registry.gitlab.com/just-ci/images/python:$PYVERSION
+  stage: build
+  script:
+    - pip3 install build
+    - python -m build
+  artifacts:
+    paths:
+      - dist
+  needs: []

@@ -1,0 +1,4 @@
+---
+include:
+  - remote: "https://jobs.just-ci.dev/asap/python/black.yml"
+  - remote: "https://jobs.just-ci.dev/asap/python/isort.yml"

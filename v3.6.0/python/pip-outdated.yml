@@ -1,0 +1,20 @@
+---
+# Checks for dependencies that are not up to date.
+
+python:pip:outdated:
+  stage: test
+  image: ${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_NAME}
+  variables:
+    EXTRA_ARGS: ""
+  script:
+    - |
+      OUTDATED="$(pip list --outdated --format freeze)"
+      if [ ! -z "${OUTDATED}" ]; then
+        echo "[!] Your image has outdated packages:"
+        pip list --outdated ${EXTRA_ARGS}
+        echo "These may not all be dependencies of your package, but these are shipped in your Docker image. Consider updating all packages by default."
+        echo "If it still fails after updating, you may have a package requiring an outdated dependency. You may then ignore this outdated package."
+        exit 1
+      fi
+    - echo "[+] Well done! You're up to date."
+  allow_failure: true

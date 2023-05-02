@@ -1,0 +1,5 @@
+---
+include:
+    - remote: "https://jobs.just-ci.dev/rhtenhove-beta-patch-01383/pipelines/project-automation.yml"
+    - remote: "https://jobs.just-ci.dev/rhtenhove-beta-patch-01383/pipelines/workflow.yml"
+    - remote: "https://jobs.just-ci.dev/rhtenhove-beta-patch-01383/pipelines/c.yml"

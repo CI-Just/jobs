@@ -1,0 +1,10 @@
+---
+include:
+  - local: tests/jobs/container.yml
+
+variables:
+  IMAGE_NAME: ${CI_REGISTRY_IMAGE}/docker-amd64-arm64
+  IMAGE_ARCHITECTURES: linux/amd64,linux/arm64
+
+.image:build:
+  extends: .docker

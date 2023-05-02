@@ -1,0 +1,93 @@
+---
+include:
+  - local: project-automation/telemetry.yml
+
+.pages:templates:
+  extends: .telemetry
+  stage: deploy
+  image:
+    name: docker.io/docker:git
+    entrypoint: [""]
+  script:
+    - |
+      if command -v apk >/dev/null; then
+        apk add -q git grep tree
+      elif command -v apt-get >/dev/null; then
+        apt-get update -qq && apt-get install -qqy git grep tree
+      else
+        echo "[-] Winging it with the tools we have. The job may fail."
+      fi
+    - |
+      if [ "$(git rev-parse --is-shallow-repository)" != "false" ]; then
+        echo "[*] Repository is shallow. Unshallowing."
+        git fetch --unshallow -q
+      fi
+    - GIT_TAGS=$(git tag --format "%(refname:strip=1)") # Produces list with 'tags/' prefix
+    - GIT_BRANCHES=$(git branch -r --format "%(refname:strip=3)")
+    - mkdir -p /tmp/public
+    - |
+      for GIT_REF in ${GIT_TAGS} ${GIT_BRANCHES}; do
+        printf "[*] Processing ${GIT_REF}..."
+        git checkout ${GIT_REF} -q
+
+        FILES=$(grep -rl "\- local: " . --exclude-dir=tests --exclude=.gitlab-ci.yml --exclude=pages-templates.yaml)
+        printf "$(echo ${FILES} | wc -w) file(s)..."
+
+        GIT_REF_NAME=${GIT_REF#tags/}
+        echo ${FILES} | xargs sed -i "s|- local: \"|- remote: \"${CI_PAGES_URL}/${GIT_REF_NAME}/|g"
+        echo ${FILES} | xargs sed -i "s|- local: |- remote: ${CI_PAGES_URL}/${GIT_REF_NAME}/|g"
+        cp -r . /tmp/public/${GIT_REF_NAME}
+        rm -rf /tmp/public/${GIT_REF_NAME}/.git
+
+        git reset --hard -q
+        echo "done."
+      done
+    - echo "[*] Publishing $(echo $GIT_TAGS | wc -w) tags and $(echo
+      $GIT_BRANCHES | wc -w) branches to ${CI_PAGES_URL}..."
+    - mv /tmp/public ${CI_PROJECT_DIR}/public
+    - find ${CI_PROJECT_DIR}/public -type f ! -name "*.yaml" ! -name "*.yml"
+      -delete
+    - find ${CI_PROJECT_DIR}/public -type d -empty -delete
+    - cd ${CI_PROJECT_DIR}/public
+    - tree -H '.' --noreport --dirsfirst -T "${PAGES_TEMPLATES_NAME:-Templates}"
+      --charset utf-8 -o index.html .
+  artifacts:
+    paths:
+      - public
+    when: always
+
+pages:
+  extends: .pages:templates
+
+pages:templates:github:
+  extends: .pages:templates
+  script:
+    - !reference [".pages:templates", script]
+    - mkdir -p ~/.ssh
+    - mv "${GITHUB_DEPLOY_KEY}" ~/.ssh/id_ed25519
+    - chmod og-rwx ~/.ssh/id_ed25519
+
+    - ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+
+    - git config --global user.name "${GITLAB_USER_NAME}"
+    - git config --global user.email "${GITLAB_USER_EMAIL}"
+
+    - git init --initial-branch main
+    - git add -A
+    - git commit -m "$(date +%Y-%m-%d"_"%H_%M_%S)"
+    - git remote add origin git@github.com:CI-Just/jobs.git
+    - git push origin main --force
+  rules:
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $GITHUB_DEPLOY_KEY"
+
+pages:templates:azure:
+  extends: .pages:templates
+  image:
+    name: swacli/static-web-apps-cli:latest
+    entrypoint: [""]
+  script:
+    - !reference [".pages:templates", script]
+    - cd ${CI_PROJECT_DIR}
+    - swa deploy --no-use-keychain --env production ${CI_PROJECT_DIR}/public
+  rules:
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $SWA_CLI_DEPLOYMENT_TOKEN"

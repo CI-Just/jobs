@@ -1,0 +1,40 @@
+---
+# pylint checks the quality of your code
+# https://www.pylint.org
+
+# Use pyproject.toml to configure pylint. For example:
+# [tool.pylint.messages_control]
+# disable = ["C0114", "C0115", "unsubscriptable-object", "too-many-lines"]
+include:
+  - remote: https://jobs.just-ci.dev/v6.20.0/python/generic.yml
+
+variables:
+  PYLINT_THRESHOLD: "6"
+  PYLINT_DEFAULT_ARGS: --recursive=y
+  PYLINT_EXTRA_ARGS: ""
+  PYLINT_EXTRA_OUTPUT_FORMATS: ""
+  PYLINT_TARGET: "."
+
+python:pylint:
+  extends: .python:pre-install
+  variables:
+    JOB_PACKAGE: pylint pylint-junit pylint-gitlab
+  script:
+    - !reference [".python:pre", script]
+    - !reference [".python:pre-install", script]
+    - |
+      if [ "${PYLINT_EXTRA_OUTPUT_FORMATS}" != "" ]; then
+        echo "[*] Extra output formats: ${PYLINT_EXTRA_OUTPUT_FORMATS}"
+        if [ "${PYLINT_EXTRA_OUTPUT_FORMATS:0:1}" != "," ]; then
+          PYLINT_EXTRA_OUTPUT_FORMATS=",${PYLINT_EXTRA_OUTPUT_FORMATS}"
+        fi
+      fi
+    - pylint --version
+    - pylint --fail-under=${PYLINT_THRESHOLD}
+      --output-format=pylint_junit.JUnitReporter:${CI_PROJECT_DIR}/pylint-report.xml,pylint_gitlab.GitlabCodeClimateReporter:${CI_PROJECT_DIR}/code-climate.json,colorized${PYLINT_EXTRA_OUTPUT_FORMATS}
+      --ignore-paths=${PYTHON_EXCLUDE_PATHS} ${PYLINT_DEFAULT_ARGS}
+      ${PYLINT_EXTRA_ARGS} ${PYLINT_TARGET:-.}
+  artifacts:
+    reports:
+      junit: pylint-report.xml
+      codequality: code-climate.json

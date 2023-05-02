@@ -1,0 +1,19 @@
+---
+# pycln checks for unused imports
+# https://pypi.org/project/pycln/
+include:
+  - remote: https://jobs.just-ci.dev/74-base64-experiment/python/generic.yml
+
+variables:
+  PYCLN_DEFAULT_ARGS: --check --all
+  PYCLN_EXTRA_ARGS: ""
+
+python:pycln:
+  extends: .python:pre
+  variables:
+    JOB_PACKAGE: pycln
+  script:
+    - !reference [".python:pre", script]
+    - pycln ${PYCLN_DEFAULT_ARGS} ${PYCLN_EXTRA_ARGS} . || (echo "[!] Problems
+      found. Run 'pycln .' in your source directory to fix these." && exit 1)
+  needs: []

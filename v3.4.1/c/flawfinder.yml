@@ -1,0 +1,13 @@
+---
+c:flawfinder:
+  stage: test
+  image: registry.gitlab.com/notno/test/c:latest
+  variables:
+    ERROR_LEVEL: "3"
+    MIN_LEVEL: "1"
+    DEFAULT_ARGS: "--falsepositive --immediate --context"
+    EXTRA_ARGS: ""
+    CHECK_PATH: "."  # Can be a file
+  script:
+    - flawfinder ${DEFAULT_ARGS} ${EXTRA_ARGS} --minlevel ${MIN_LEVEL} --error-level=${ERROR_LEVEL} ${CHECK_PATH}  # yamllint disable-line rule:line-length
+  needs: []

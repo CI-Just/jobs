@@ -1,0 +1,20 @@
+---
+variables:
+  PYVERSION: latest
+
+python:package-discovery:
+  stage: build
+  image: registry.gitlab.com/notno/ci/images/python:$PYVERSION
+  script:
+    - printf "PYTHON_PACKAGE=" > ${CI_PROJECT_DIR}/package.env
+    - |
+      printf '[*] Auto discovered package: '
+      pip3 install . --no-deps 2>/dev/null | grep 'Installing collected packages: ' | cut -d' ' -f4 | tr - _ | tee -a ${CI_PROJECT_DIR}/package.env
+      echo "[*] If this is not correct, provide the package name variable PYTHON_PACKAGE=<package_name> in your .gitlab-ci.yml"
+  artifacts:
+    reports:
+      dotenv: package.env
+  rules:
+    - if: $PYTHON_PACKAGE
+      when: never
+    - when: always

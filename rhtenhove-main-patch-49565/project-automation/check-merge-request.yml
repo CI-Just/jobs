@@ -1,0 +1,39 @@
+---
+check:merge-request:
+  stage: .pre
+  image: node:alpine
+  variables:
+    GIT_STRATEGY: none
+  script:
+    
+    - npm install -g git-conventional-commits
+
+    - git-conventional-commits init
+    - printf "Your Merge Request title is "
+    - echo "${CI_MERGE_REQUEST_TITLE}" | tee /tmp/mr_title
+    - |
+      if git-conventional-commits commit-msg-hook /tmp/mr_title; then
+        echo "[+] Merge request title uses conventional commit format. 👍"
+      else
+        exit 1  # The previous command will output a descriptive error
+      fi
+
+    # The following is commented out because we currently cannot check if
+    # squash is enabled for the current Merge Request
+    # - apk add --no-cache curl jq
+    # - |
+    #   curl -sSLf --header "PRIVATE-TOKEN: ${GL_TOKEN}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests?iids[]=${CI_MERGE_REQUEST_IID}" > /tmp/mr.json
+    # - |
+    #   if [ "$(jq -r '.[].squash' test.json)" = "true" ]; then
+    #     echo "[*] Squashing is enabled. Will check the MR title."
+        
+    #     if ! git-conventional-commits commit-msg-hook /tmp/mr_title; then
+    #       exit 1  # The previous command will output a descriptive error
+    #     else
+    #       echo "[+] Merge request title looks good."
+    #     fi
+    #   else
+    #     echo "[!] You're not squashing this MR. Ensure all commit messages have a proper format!"  # TODO automatically check this
+    #   fi
+  rules:
+    - if: $CI_MERGE_REQUEST_IID

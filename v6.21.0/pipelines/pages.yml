@@ -1,0 +1,12 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/v6.21.0/project-automation/badge.yml
+  - remote: https://jobs.just-ci.dev/v6.21.0/project-automation/pages.yml
+
+badge:pages:
+  extends: .badge
+  variables:
+    NAME: GitLab
+    VALUE: Pages
+    COLOR: teal
+    URL: ${CI_PAGES_URL}

@@ -1,0 +1,9 @@
+---
+docs:latex:
+  stage: build
+  image: blang/latex:ctanfull
+  script:
+    - pdflatex main.tex && biber main && pdflatex main.tex
+  artifacts:
+    paths:
+      - main.pdf

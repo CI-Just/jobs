@@ -1,0 +1,23 @@
+---
+gitlab:schedule-pipelines:
+  stage: .pre
+  image: alpine
+  variables:
+    GIT_STRATEGY: none
+    DESCRIPTION: "CI Daily Update"
+    CRON: "0 10 * * *" # Every day at 10:00
+  script:
+    - apk add --no-cache curl jq
+    - |
+      for PROJECT_ID in ${SCHEDULE_PIPELINE_PROJECT_IDS}; do
+        if curl -sSLf -H "PRIVATE-TOKEN: ${GL_TOKEN}" "${CI_API_V4_URL}/projects/${PROJECT_ID}/pipeline_schedules" | jq -e --arg DESCRIPTION "$DESCRIPTION" '.[].description | contains($DESCRIPTION)' | grep true >/dev/null; then
+          echo "[-] Project ID ${PROJECT_ID} already has a scheduled pipeline called '${DESCRIPTION}'."
+        else
+          DEFAULT_BRANCH=$(curl -sSLf -H "PRIVATE-TOKEN: ${GL_TOKEN}" "${CI_API_V4_URL}/projects/${PROJECT_ID}" | jq ".default_branch" -r)
+
+          curl -sSLf -X POST -H "PRIVATE-TOKEN: ${GL_TOKEN}" -F ref="${DEFAULT_BRANCH}" -F description="${DESCRIPTION}" -F cron_timezone="${TZ:-UTC}" -F cron="${CRON}" "${CI_API_V4_URL}/projects/${PROJECT_ID}/pipeline_schedules" > /dev/null
+          echo "[+] A pipeline schedule called '${DESCRIPTION}' has been created for project ID ${PROJECT_ID}."
+        fi
+      done
+  rules:
+    - if: $GL_TOKEN && $SCHEDULE_PIPELINE_PROJECT_IDS

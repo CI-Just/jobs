@@ -1,0 +1,10 @@
+---
+python:twine:
+  stage: .post
+  image: registry.gitlab.com/notno/python-tests
+  variables:
+    TWINE_USERNAME: ${CI_REGISTRY_USER}
+    TWINE_PASSWORD: ${CI_JOB_TOKEN}
+  script:
+    - pip install twine
+    - twine upload --repository-url ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi dist/*

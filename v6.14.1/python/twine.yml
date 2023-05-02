@@ -1,0 +1,18 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/v6.14.1/python/generic.yml
+
+variables:
+  TWINE_USERNAME: gitlab-ci-token
+  TWINE_PASSWORD: ${CI_JOB_TOKEN}
+  TWINE_REGISTRY: ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi
+
+python:twine:
+  extends: .python:pre
+  stage: .post
+  variables:
+    JOB_PACKAGE: twine build
+  script:
+    - !reference [".python:pre", script]
+    - python3 -m build
+    - twine upload --skip-existing --repository-url ${TWINE_REGISTRY} dist/*

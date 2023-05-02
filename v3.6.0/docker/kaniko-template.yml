@@ -1,0 +1,47 @@
+---
+# https://github.com/GoogleContainerTools/kaniko
+# kaniko is a tool to build container images from a Dockerfile,
+# inside a container or Kubernetes cluster.
+# kaniko does not depend on a Docker daemon and executes
+# each command within a Dockerfile completely in userspace
+
+.kaniko-template:
+  stage: build
+  variables:
+    USE_CACHE: "true"
+    CONTEXT: ${CI_PROJECT_DIR}
+    DOCKERFILE: "Dockerfile"  # Can be a path
+    DEV_BUILD: "false"  # set true to tag an image for each commit
+    LABELS: "--label=CI_PROJECT_URL=${CI_PROJECT_URL}
+             --label=CI_COMMIT_SHORT_SHA=${CI_COMMIT_SHORT_SHA}
+             --label=CI_COMMIT_REF_NAME=${CI_COMMIT_REF_NAME}"
+    EXTRA_ARGS: ""  # See https://github.com/GoogleContainerTools/kaniko#additional-flags
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  script:
+    - |
+      if [ "${CI_COMMIT_REF_NAME}" != "$(echo ${CI_COMMIT_REF_NAME} | sed 's/[^a-zA-Z0-9._]/-/g')" ]; then
+        echo "Branch names must follow docker tag rules. Only use ASCII (lower or upper case), digits, underscores, periods and dashes. Your current branch name is '${CI_COMMIT_REF_NAME}'. A suggestion is '$(echo ${CI_COMMIT_REF_NAME} | sed 's/[^a-zA-Z0-9._]/-/g')'"
+        exit 1
+      fi
+    - echo "{\"auths\":{\"${CI_REGISTRY}\":{\"username\":\"${CI_REGISTRY_USER}\",\"password\":\"${CI_REGISTRY_PASSWORD}\"}}}" > /kaniko/.docker/config.json
+    - |
+      if [ -z "${DESTINATIONS}" ]; then
+        DESTINATIONS="--destination=${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_NAME}"
+        if [ "${CI_COMMIT_REF_NAME}" = "${CI_DEFAULT_BRANCH}" ]; then
+          DESTINATIONS="${DESTINATIONS} --destination=${CI_REGISTRY_IMAGE}:latest"
+        fi
+      fi
+    - |
+      if [ "${DEV_BUILD}" = "true" ]; then
+        DESTINATIONS="${DESTINATIONS} --destination=${CI_REGISTRY_IMAGE}/dev:${CI_COMMIT_SHORT_SHA}"
+      fi
+    - printf "Will use the following destinations:${DESTINATIONS}\n" | sed 's/--destination=/\n/g'
+    - /kaniko/executor --cache=${USE_CACHE} --context=${CONTEXT} --dockerfile=${DOCKERFILE} ${DESTINATIONS} ${LABELS} ${EXTRA_ARGS}
+    - |
+      if [ "${PYTHON_TEST}" = "true" ]; then
+        printf "\nRUN if ! python3 -m pip >/dev/null; then wget -q https://bootstrap.pypa.io/get-pip.py && python3 get-pip.py; fi" >> ${CONTEXT}/${DOCKERFILE}
+        printf "\nRUN python3 -m pip install pytest pytest-cov pylint pylint_junit safety mutmut coverage" >> ${CONTEXT}/${DOCKERFILE}
+        /kaniko/executor --cache=${USE_CACHE} --context=${CONTEXT} --dockerfile=${DOCKERFILE} --destination=${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_NAME}-testing ${EXTRA_ARGS}
+      fi

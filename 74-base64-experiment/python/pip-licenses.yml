@@ -1,0 +1,21 @@
+---
+# Check the package page on how to configure this job
+# https://pypi.org/project/pip-licenses/
+include:
+  - remote: https://jobs.just-ci.dev/74-base64-experiment/python/generic.yml
+  - remote: https://jobs.just-ci.dev/74-base64-experiment/python/install-extras.yml
+
+variables:
+  PIP_LICENSES_ALLOWED: "" # Empty means all. Semicolon separated list. See https://pypi.org/project/pip-licenses/#option-allow-only
+
+python:pip-licenses:
+  extends: .python:install-extras
+  variables:
+    JOB_PACKAGE: pip-licenses
+  script:
+    # isolate installation to ignore licenses of pre-installed packages
+    - python3 -m venv .venv
+    - source .venv/bin/activate
+    - !reference [".python:pre", script]
+    - !reference [".python:install-extras", script]
+    - pip-licenses --from=mixed --allow-only="${PIP_LICENSES_ALLOWED}"

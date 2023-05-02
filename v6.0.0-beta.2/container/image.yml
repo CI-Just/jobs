@@ -1,0 +1,25 @@
+---
+# IMAGE_DEV_TAG: to always be used for follow-up jobs
+
+variables:
+  IMAGE_NAME: ${CI_REGISTRY_IMAGE}
+  IMAGE_TAG: ${CI_COMMIT_SHORT_SHA}
+  IMAGE_DEV_TAG: dev-${CI_COMMIT_SHORT_SHA} # allows registry cleanup policy
+  IMAGE_CONTEXT: ${CI_PROJECT_DIR}
+  IMAGE_CONTAINERFILE: "Dockerfile" # Can be a path
+  IMAGE_CACHE: "true"
+
+.container:rules:
+  rules:
+    # default branch
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+      variables:
+        IMAGE_TAG: "latest"
+    # tags
+    - if: $CI_COMMIT_TAG
+      variables:
+        IMAGE_TAG: $CI_COMMIT_TAG
+    # non-default branches
+    - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH
+      variables:
+        IMAGE_TAG: ${CI_COMMIT_REF_SLUG}

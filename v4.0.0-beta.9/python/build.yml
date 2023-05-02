@@ -1,0 +1,11 @@
+---
+python:build:
+  image: registry.gitlab.com/notno/ci/images/python:latest
+  stage: build
+  script:
+    - pip3 install build
+    - python -m build
+  artifacts:
+    paths:
+      - dist
+  needs: []

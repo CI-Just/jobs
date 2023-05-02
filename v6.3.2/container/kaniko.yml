@@ -1,0 +1,30 @@
+---
+# https://github.com/GoogleContainerTools/kaniko
+
+# DEV image&tag: the one to always be used for followup jobs (in branches, master, tags etc)
+# global variable for easy override
+include:
+  - remote: https://jobs.just-ci.dev/v6.3.2/container/image.yml
+
+variables:
+  KANIKO_EXTRA_ARGS: "" # See https://github.com/GoogleContainerTools/kaniko#additional-flags
+
+.kaniko:
+  stage: build
+  extends: [".image:rules", ".image:name"]
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  script:
+    - !reference [".image:name", script]
+    - |
+      if [ "${KANIKO_EXTRA_ARGS}" != "" ]; then
+        echo "[*] Applying the extra arguments '${KANIKO_EXTRA_ARGS}'."
+      fi
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$(echo -n
+      ${CI_REGISTRY_USER}:${CI_REGISTRY_PASSWORD} | base64)\"}}}" >
+      /kaniko/.docker/config.json
+    - /kaniko/executor --cache=${IMAGE_CACHE} --context=${IMAGE_CONTEXT}
+      --dockerfile=${IMAGE_CONTAINERFILE}
+      --destination=${IMAGE_NAME}:${IMAGE_DEV_TAG}
+      --destination=${IMAGE_NAME}:${IMAGE_TAG} ${KANIKO_EXTRA_ARGS}

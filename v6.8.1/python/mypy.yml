@@ -1,0 +1,23 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/v6.8.1/python/generic.yml
+
+variables:
+  MYPY_DEFAULT_ARGS: --strict --ignore-missing-imports --show-error-context
+  MYPY_EXTRA_ARGS: ""
+
+python:mypy:
+  extends: .python:pre-install
+  variables:
+    MYPY_FORCE_COLOR: 1
+    JOB_PACKAGE: mypy
+  script:
+    - !reference [".python:pre", script]
+    - !reference [".python:pre-install", script]
+    - mkdir -p .mypy_cache
+    - mypy --install-types --non-interactive --junit-xml
+      ${CI_PROJECT_DIR}/mypy-report.xml ${MYPY_DEFAULT_ARGS} ${MYPY_EXTRA_ARGS}
+      . --exclude "${PYTHON_EXCLUDE_REGEX}"
+  artifacts:
+    reports:
+      junit: mypy-report.xml

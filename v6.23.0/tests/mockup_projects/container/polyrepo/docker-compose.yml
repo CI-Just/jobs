@@ -1,0 +1,6 @@
+---
+version: "3.8"
+services:
+  useless:
+    image: docker.io/alpine:3
+    command: echo "I'm useless"

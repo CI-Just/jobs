@@ -1,0 +1,27 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/v6.14.3/python/generic.yml
+  - remote: https://jobs.just-ci.dev/v6.14.3/python/package-discovery.yml
+
+python:extras-discovery:
+  extends: .python:pre
+  variables:
+    PIP_PACKAGE_INSTALL_EXTRA_ARGS: --no-deps
+  stage: build
+  script:
+    - !reference [".python:pre-install", script]
+    - |
+      printf "PYTHON_PACKAGE_EXTRAS=" > ${CI_PROJECT_DIR}/package-extras.env
+      printf "[*] Auto discovered package extras: "
+      python -c "from importlib.metadata import metadata; print(metadata('${PYTHON_PACKAGE}').get_all('Provides-Extra', []))" | tr -d "[]' " | tee -a ${CI_PROJECT_DIR}/package-extras.env
+      echo "[*] If this is not correct, provide the package extras variable PYTHON_PACKAGE_EXTRAS=<package_extra_1>,<package_extra_2> in your .gitlab-ci.yml"
+  needs:
+    - job: python:package-discovery
+      optional: true
+  artifacts:
+    reports:
+      dotenv: package-extras.env
+  rules:
+    - if: $PYTHON_PACKAGE_EXTRAS == "*"
+      when: always
+    - when: never

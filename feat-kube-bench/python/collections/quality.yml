@@ -1,0 +1,5 @@
+---
+include:
+  - remote: "https://jobs.just-ci.dev/feat-kube-bench/python/mypy.yml"
+  - remote: "https://jobs.just-ci.dev/feat-kube-bench/python/pylint.yml"
+  - remote: "https://jobs.just-ci.dev/feat-kube-bench/python/pytest.yml"

@@ -1,0 +1,12 @@
+---
+os:maintenance:debian:
+  stage: deploy
+  script:
+    - sudo apt-get update
+    - sudo apt-mark hold gitlab-runner # We need this process to stay during the upgrade.
+    - sudo apt-get full-upgrade -y
+    - sudo apt-get autopurge -y
+    - sudo apt-get purge -y $(dpkg -l | grep '^rc' | awk '{print $2}') # Purge package previously only removed
+    - sudo apt-get install --only-upgrade -y gitlab-runner & # We'll send this upgrade to the background, so it can finish by itself
+  rules:
+    - if: $CI_DISPOSABLE_ENVIRONMENT == null

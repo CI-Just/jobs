@@ -1,0 +1,11 @@
+---
+variables:
+  COMPOSE_FILE: "./docker-compose.yml"
+
+docker:compose:config:
+  image: docker/compose
+  stage: test
+  variables:
+    EXTRA_ARGS: ""  # e.g. -f deployment/dev.yml
+  script:
+    - docker-compose -f ${COMPOSE_FILE} ${EXTRA_ARGS} config

@@ -1,0 +1,35 @@
+---
+variables:
+  PYVERSION: slim
+  PYTHON_EXCLUDE_PATHS: tests,setup.py,migrations
+  PYTHON_EXCLUDE_REGEX: (tests|setup.py|migrations)
+  PIP_DISABLE_PIP_VERSION_CHECK: "true"
+  PIP_ROOT_USER_ACTION: ignore
+
+image:
+  name: registry.gitlab.com/just-ci/images/python:$PYVERSION
+  entrypoint: [""]
+
+.python:pre:
+  image:
+    name: registry.gitlab.com/just-ci/images/python:$PYVERSION
+    entrypoint: [""]
+  stage: test
+  script:
+    - pip3 install ${PACKAGE}
+    - |
+      MESSAGE="[*] Will run this job in path '${PYTHON_CONTEXT:-.}'"
+      if [ "${PYTHON_PACKAGE}" != "" ]; then
+        MESSAGE="${MESSAGE} on package '${PYTHON_PACKAGE}'"
+      fi
+      if [ "${PYTHON_EXCLUDE_PATHS}" != "" ]; then
+        MESSAGE="${MESSAGE} and excluding paths '${PYTHON_EXCLUDE_PATHS}'"
+      fi
+      if [ "${PYTHON_EXCLUDE_REGEX}" != "" ]; then
+        MESSAGE="${MESSAGE} and excluding regex '${PYTHON_EXCLUDE_REGEX}'"
+      fi
+      echo "${MESSAGE}..."
+    - cd ${PYTHON_CONTEXT:-.}
+
+.python:fast:
+  needs: []

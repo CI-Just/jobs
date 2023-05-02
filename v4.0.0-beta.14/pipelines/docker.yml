@@ -1,0 +1,29 @@
+---
+include:
+  - remote: "https://jobs.just-ci.dev/v4.0.0-beta.14/docker/kaniko.yml"
+  - remote: "https://jobs.just-ci.dev/v4.0.0-beta.14/docker/grype.yml"
+
+kaniko:
+  rules:
+    # master/main
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+      variables:
+        KANIKO_TAG: "latest"
+    # tags
+    - if: $CI_COMMIT_TAG
+      variables:
+        KANIKO_TAG: $CI_COMMIT_TAG
+    # branches
+    - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH
+      variables:
+        KANIKO_TAG: branch-${CI_COMMIT_REF_SLUG}  # allows registry cleanup policy
+
+# set the image to the dev image for all jobs without a job-level default image
+image:
+  name: ${KANIKO_REGISTRY_IMAGE}:${KANIKO_DEV_TAG}
+  entrypoint: [""]
+
+grype:
+  before_script:
+    - export GRYPE_IMAGE="${KANIKO_REGISTRY_IMAGE}:${KANIKO_DEV_TAG}"
+  allow_failure: true

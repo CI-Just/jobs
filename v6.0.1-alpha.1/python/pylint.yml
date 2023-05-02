@@ -1,0 +1,27 @@
+---
+# pylint checks the quality of your code
+# https://www.pylint.org
+
+# Use pyproject.toml to configure pylint. For example:
+# [tool.pylint.messages_control]
+# disable = ["C0114", "C0115", "unsubscriptable-object", "too-many-lines"]
+include:
+  - remote: "https://gitlab.com/just-ci/templates/-/raw/v6.0.1/python/generic.yml"
+
+variables:
+  PYLINT_THRESHOLD: "6"
+  PYLINT_EXTRA_ARGS: ""
+
+python:pylint:
+  stage: test
+  variables:
+    PACKAGE: pylint pylint-junit
+  script:
+    - !reference [".python:pre", script]
+    - pip3 install . || true # installs package only if available
+    - pylint --fail-under ${PYLINT_THRESHOLD} ${PYLINT_EXTRA_ARGS}
+      --output-format=pylint_junit.JUnitReporter:${CI_PROJECT_DIR}/pylint-report.xml,colorized
+      $(ls **/*.py | egrep -v "${PYTHON_EXCLUDE_REGEX}")
+  artifacts:
+    reports:
+      junit: pylint-report.xml

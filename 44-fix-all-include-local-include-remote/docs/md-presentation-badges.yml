@@ -1,0 +1,48 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/44-fix-all-include-local-include-remote/project-automation/badge.yml
+  - remote: https://jobs.just-ci.dev/44-fix-all-include-local-include-remote/project-automation/check-GL-token.yml
+
+.badge:md-presentation:
+  extends: .badge
+  variables:
+    COLOR: "#6495ED" # Cornflower blue
+  before_script:
+    - LABEL=$(date +'%Y-%m-%d')
+  needs:
+    - docs:md-presentation
+
+badge:pdf:
+  extends: .badge:md-presentation
+  variables:
+    VALUE: pdf - ${CI_COMMIT_REF_NAME}
+    URL: "${PDF}"
+    BADGE_NAME: pdf
+
+badge:pptx:
+  extends: .badge:md-presentation
+  variables:
+    VALUE: pptx - ${CI_COMMIT_REF_NAME}
+    URL: "${PPTX}"
+    BADGE_NAME: pptx
+
+badge:html:
+  extends: .badge:md-presentation
+  variables:
+    VALUE: html - ${CI_COMMIT_REF_NAME}
+    URL: "${HTML}"
+    BADGE_NAME: html
+
+badge:html-zip:
+  extends: .badge:md-presentation
+  variables:
+    VALUE: html.zip - ${CI_COMMIT_REF_NAME}
+    URL: "${HTML_ZIP}"
+    BADGE_NAME: html-zip
+
+badge:images:
+  extends: .badge:md-presentation
+  variables:
+    VALUE: images.zip - ${CI_COMMIT_REF_NAME}
+    URL: "${IMAGES}"
+    BADGE_NAME: images

@@ -1,0 +1,49 @@
+---
+# Publishes a hugo repo as GitLab pages.
+# The job name must be pages for it to work.
+
+# Add a before script to add an external theme, for example:
+# .pages:
+#   before_script:
+#     - git clone https://github.com/matcornic/hugo-theme-learn.git themes/hugo-theme-learn
+
+include:
+  - remote: https://jobs.just-ci.dev/v6.20.0/project-automation/telemetry.yml
+
+variables:
+  HUGO_DEFAULT_ARGS: --minify
+  HUGO_EXTRA_ARGS: ""
+
+.pages:
+  extends: .telemetry
+  image:
+    name: registry.gitlab.com/just-ci/images/hugo:latest
+    entrypoint: [""]
+  script:
+    - hugo version
+    - hugo --destination ${CI_PROJECT_DIR}/public ${HUGO_DEFAULT_ARGS}
+      ${HUGO_EXTRA_ARGS}
+    - gzip -kr ${CI_PROJECT_DIR}/public
+    - |
+      if [ "${CI_COMMIT_BRANCH}" != "${CI_DEFAULT_BRANCH}" ]; then
+        echo "[!] When browing the test job artifacts you may not see the full final result when opening an HTML file, as the built site may reference absolute URLs."
+      fi
+  artifacts:
+    paths:
+      - public
+    when: always
+
+pages:
+  extends: .pages
+  stage: build
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+
+pages:dev:
+  extends: .pages
+  stage: test
+  environment:
+    name: Development
+    url: $CI_SERVER_URL/-/$CI_PROJECT_PATH/-/jobs/$CI_JOB_ID/artifacts/file/public/index.html
+  rules:
+    - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH

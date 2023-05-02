@@ -1,0 +1,19 @@
+---
+include:
+  - local: pipelines/python.yml
+  - local: pipelines/container/polyrepo.yml
+  - local: pipelines/workflow.yml
+
+variables:
+  KANIKO_REGISTRY_IMAGE: ${CI_REGISTRY_IMAGE}/python-pep518
+  KANIKO_CONTEXT: ${CI_PROJECT_DIR}/tests/mockup_projects/python/pep518
+  KANIKO_DOCKERFILE: ${CI_PROJECT_DIR}/tests/mockup_projects/python/pep518/Dockerfile
+
+before_script:
+  - cd tests/mockup_projects/python/pep518
+
+grype:
+  variables:
+    GRYPE_FAIL_ON_THRESHOLD: ""
+    GRYPE_IMAGE: ${KANIKO_REGISTRY_IMAGE}:${KANIKO_DEV_TAG}
+  allow_failure: false

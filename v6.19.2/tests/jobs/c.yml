@@ -1,0 +1,10 @@
+---
+include:
+  - local: c/cppcheck.yml
+  - local: c/flawfinder.yml
+  - local: project-automation/workflow.yml
+
+variables:
+  C_CONTEXT: tests/mockup_projects/c
+  CPPCHECK_EXIT_CODE: 0
+  FLAWFINDER_ERROR_LEVEL: "6"

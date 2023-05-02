@@ -1,0 +1,6 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/74-base64-experiment/python/mypy.yml
+  - remote: https://jobs.just-ci.dev/74-base64-experiment/python/pycln.yml
+  - remote: https://jobs.just-ci.dev/74-base64-experiment/python/pylint.yml
+  - remote: https://jobs.just-ci.dev/74-base64-experiment/python/pytest.yml

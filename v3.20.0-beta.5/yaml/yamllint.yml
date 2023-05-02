@@ -1,0 +1,15 @@
+---
+# yamllint is a generic linter for yaml
+# https://github.com/adrienverge/yamllint
+
+yaml:yamllint:
+  stage: test
+  image: registry.gitlab.com/notno/python-tests
+  variables:
+    EXTRA_ARGS: ""
+  script:
+    - yamllint ${EXTRA_ARGS} .
+  rules:
+    - exists:
+        - "**/*.yml"
+        - "**/*.yaml"

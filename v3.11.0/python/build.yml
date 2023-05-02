@@ -1,0 +1,10 @@
+---
+python:build:
+  stage: build
+  image: registry.gitlab.com/notno/python-tests
+  script:
+    - pip install build
+    - python -m build --no-isolation
+  artifacts:
+    paths:
+      - dist

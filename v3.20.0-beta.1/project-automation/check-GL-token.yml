@@ -1,0 +1,30 @@
+---
+check-GL-token:
+    stage: .pre
+    image: alpine
+    script:
+        - |
+            echo "[!] For gitlab automation jobs You need to set a variable called 'GL_TOKEN' with a Project Access Token with either 'read_api' or 'api' scope access."
+            echo "[!] The variable should be available only on protected branches"
+
+            if [[ ! -z "${CI_COMMIT_REF_PROTECTED}" ]]; then
+                echo "[!] branch $CI_COMMIT_REF_NAME is protected"
+                if [[ ! -z "${GL_TOKEN}" ]]; then
+                    echo "[!] GL_TOKEN is set"
+                    echo "[!] Everything OK"
+                else
+                    echo "[!] GL_TOKEN not set!"
+                    echo "[!] gitlab:semantic-release jobs will not run."
+                    echo "[!] gitlab:badge job will not run."
+                    echo "[!] gitlab:recommended job will not run."
+                fi
+            else
+                echo "[!] branch $CI_COMMIT_REF_NAME not protected"
+                if [[ "${GL_TOKEN}" ]]; then
+                    echo "[!] GL_TOKEN is set, but the current branch is unprotected!"
+                    echo "[!] This is a security risk."
+                    echo "[!] Set the variable as protected to make it available only to protected branches"
+                else
+                    echo "[!] Everything OK"
+                fi
+            fi

@@ -1,0 +1,5 @@
+---
+docker:login:
+  extends: .ssh
+  script:
+    - ssh ${REMOTE_USER}@${REMOTE_HOST} "docker login ${CI_REGISTRY} -u ${DEPLOY_USER} -p ${DEPLOY_TOKEN}"

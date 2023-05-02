@@ -1,0 +1,26 @@
+# Checks for dependencies that are not up to date.
+
+python:pip:outdated:
+  stage: test
+  image: ${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_NAME}
+  variables:
+    CHECK_ALL: "false"  # Set to true if you also want to check packages such as pip, setuptools and dependencies of your dependencies
+  script:
+    - echo "CHECK_ALL=${CHECK_ALL}"
+    - OUTDATED="$(pip list --outdated --format freeze)"
+    - |
+      if "${CHECK_ALL}" = "true"; then
+        if [ ! -z "${OUTDATED}" ]; then
+          echo "[!] Your image has outdated packages:"
+          pip list --outdated
+          exit 1
+        fi
+      else
+        OUTDATED_NOT_REQUIRED="$(pip list --outdated --format freeze --not-required)"
+        if [ ! -z "${OUTDATED_NOT_REQUIRED}" ]; then
+          echo "[!] Your image has outdated packages:"
+          pip list --outdated --not-required
+          exit 1
+        fi
+      fi
+    - echo "[+] Well done! You're up to date."

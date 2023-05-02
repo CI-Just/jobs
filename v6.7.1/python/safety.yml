@@ -1,0 +1,19 @@
+---
+# safety checks your installed python dependencies for known
+# security vulnerabilities
+# https://pypi.org/project/safety/
+include:
+  - remote: https://jobs.just-ci.dev/v6.7.1/python/generic.yml
+
+python:safety:
+  extends:
+    - .python:pre
+    - .python:pre-install
+  variables:
+    JOB_PACKAGE: safety
+  script:
+    - python3 -m venv .venv
+    - source .venv/bin/activate
+    - !reference [".python:pre", script]
+    - !reference [".python:pre-install", script]
+    - safety check

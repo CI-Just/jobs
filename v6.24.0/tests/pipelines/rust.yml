@@ -1,0 +1,7 @@
+---
+include:
+  - local: pipelines/rust.yml
+
+.rust:
+  before_script:
+    - cd tests/mockup_projects/rust

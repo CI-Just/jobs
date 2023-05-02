@@ -1,0 +1,25 @@
+---
+variables:
+    PYVERSION: "latest"
+    PYTHON_PACKAGE_DISCOVERY_PATTERN: "Installing collected packages: "
+
+python:package-discovery:
+    stage: build
+    image: registry.gitlab.com/notno/ci/images/python:$PYVERSION
+    script:
+        - |
+            if [ ! -z "${PYTHON_PACKAGE}" ]; then
+                echo "[*] YOU provided the gitlab CI PYTHON_PACKAGE variable with value: ${PYTHON_PACKAGE}"
+            else
+                TEMP_FILE=$(mktemp)
+                pip3 install . --no-deps | tee >(grep "${PYTHON_PACKAGE_DISCOVERY_PATTERN}" | sed 's/.*'"${PYTHON_PACKAGE_DISCOVERY_PATTERN}"'\(.*\)$/\1/' > ${TEMP_FILE})
+                PYTHON_PACKAGE=$(cat ${TEMP_FILE})
+                rm ${TEMP_FILE}
+                echo "[*] Auto discovered package:" ${PYTHON_PACKAGE}
+                echo "[*] If this is not correct, please provide yourself the package name thorugh the gitlab CI variable PYTHON_PACKAGE"
+                echo "PYTHON_PACKAGE=$PYTHON_PACKAGE" >> $CI_PROJECT_DIR/python-ci.env
+            fi
+            echo "the variable PYTHON_PACKAGE=$PYTHON_PACKAGE will be available to jobs in later stages"
+    artifacts:
+        reports:
+            dotenv: $CI_PROJECT_DIR/python-ci.env

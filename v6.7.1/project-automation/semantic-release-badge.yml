@@ -1,0 +1,18 @@
+---
+badge:semantic-release:
+  extends: .badge
+  before_script:
+    # If tbump did not create a new version, get the tag of the current commit
+    - TAG_VERSION="${TBUMP_NEXT_VERSION:-$(git describe --tags --abbrev=0)}"
+    - |
+      if [ "${TAG_VERSION}" = "" ]; then
+        echo "[!] No bumped version."
+      elif [ ! "${TAG_VERSION::1}" = "v" ]; then
+        TAG_VERSION="v${TAG_VERSION}"
+      fi
+  variables:
+    LABEL: "version"
+    VALUE: "${TAG_VERSION}"
+    COLOR: "green"
+    URL: "${CI_PROJECT_URL}/tags/v${TAG_VERSION}"
+    BADGE_NAME: "version"

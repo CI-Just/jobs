@@ -1,0 +1,12 @@
+---
+include:
+  - local: pipelines/container.yml
+  - local: pipelines/workflow.yml
+
+variables:
+  IMAGE_NAME: ${CI_REGISTRY_IMAGE}/container-polyrepo
+  IMAGE_CONTEXT: ${CI_PROJECT_DIR}/tests/mockup_projects/container/polyrepo
+  GRYPE_FAIL_ON_THRESHOLD: ""
+
+grype:
+  allow_failure: false

@@ -1,0 +1,7 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/v6.18.0/python/mypy.yml
+  - remote: https://jobs.just-ci.dev/v6.18.0/python/pycln.yml
+  - remote: https://jobs.just-ci.dev/v6.18.0/python/pylint.yml
+  - remote: https://jobs.just-ci.dev/v6.18.0/python/pytest.yml
+  - remote: https://jobs.just-ci.dev/v6.18.0/python/lizard.yml

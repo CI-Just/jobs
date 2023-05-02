@@ -1,0 +1,5 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/pytest-import/project-automation/workflow.yml
+  - remote: https://jobs.just-ci.dev/pytest-import/c/flawfinder.yml
+  - remote: https://jobs.just-ci.dev/pytest-import/c/cppcheck.yml

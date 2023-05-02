@@ -1,0 +1,5 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/beta/project-automation/workflow.yml
+  - remote: https://jobs.just-ci.dev/beta/c/flawfinder.yml
+  - remote: https://jobs.just-ci.dev/beta/c/cppcheck.yml

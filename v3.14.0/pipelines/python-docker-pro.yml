@@ -1,0 +1,28 @@
+---
+include:
+  - remote: "https://jobs.just-ci.dev/v3.14.0/docker/kaniko.yml"
+  - remote: "https://jobs.just-ci.dev/v3.14.0/pipelines/python-pro.yml"
+
+python:mypy:
+  image:
+    name: ${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_NAME}
+    entrypoint: [""]
+  needs: ["docker:kaniko"]
+
+python:pylint:
+  image:
+    name: ${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_NAME}
+    entrypoint: [""]
+  needs: ["docker:kaniko"]
+
+python:pytest:
+  image:
+    name: ${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_NAME}
+    entrypoint: [""]
+  needs: ["docker:kaniko"]
+
+python:safety:
+  image:
+    name: ${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_NAME}
+    entrypoint: [""]
+  needs: ["docker:kaniko"]

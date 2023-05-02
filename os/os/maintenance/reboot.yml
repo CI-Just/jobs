@@ -1,0 +1,7 @@
+---
+system:reboot:
+  stage: deploy
+  script:
+    - sudo reboot
+  rules:
+    - if: '$CI_DISPOSABLE_ENVIRONMENT == null && $REBOOT'

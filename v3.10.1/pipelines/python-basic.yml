@@ -1,0 +1,13 @@
+---
+include:
+  - remote: "https://jobs.just-ci.dev/v3.10.1/pipelines/workflow.yml"
+  - remote: "https://jobs.just-ci.dev/v3.10.1/python/black.yml"
+  - remote: "https://jobs.just-ci.dev/v3.10.1/python/isort.yml"
+  - remote: "https://jobs.just-ci.dev/v3.10.1/python/mypy.yml"
+  - remote: "https://jobs.just-ci.dev/v3.10.1/python/pylint.yml"
+
+python:mypy:
+  allow_failure: true
+  needs: []
+python:pylint:
+  needs: []

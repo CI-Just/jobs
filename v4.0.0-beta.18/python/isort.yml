@@ -1,0 +1,20 @@
+---
+# isort sorts your imports
+# this job will check if your imports follow
+# isort profile=black format, for black compatibility
+# https://github.com/PyCQA/isort
+
+variables:
+  PYVERSION: "latest"
+
+python:isort:
+  stage: test
+  image: registry.gitlab.com/notno/ci/images/python:$PYVERSION
+  variables:
+    CHECK_PATH: "./${PYTHON_PACKAGE}"
+    EXCLUDE: ""  # Files/dirs to ignore. For Django use 'migrations'
+  script:
+    - echo "will run test on PYTHON_PACKAGE=${PYTHON_PACKAGE}"
+    - pip3 install isort
+    - isort --check --profile=black --diff --color ${CHECK_PATH} --extend-skip=${EXCLUDE} || (echo "[!] Problems found. Run 'isort --profile=black .' in your source directory to fix these." && exit 1)
+  needs: []

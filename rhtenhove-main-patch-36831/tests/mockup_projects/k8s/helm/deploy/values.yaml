@@ -1,0 +1,11 @@
+---
+gitlabUrl: https://gitlab.com/
+runnerRegistrationToken: some_token
+rbac:
+  create: true
+  clusterWideAccess: false
+runners:
+  name: Some Cluster Runner
+  image: ubuntu:22.04
+  tags: kubernetes,cluster
+  runUntagged: true

@@ -1,0 +1,22 @@
+---
+variables:
+  MYPY_DEFAULT_SETTINGS: "--strict --ignore-missing-imports --show-error-context"
+  MYPY_EXTRA_SETTINGS: ""
+  MYPY_EXCLUDE_REGEX: '(tests/|setup.py)'  # Keep the single quotes
+  PYVERSION: "latest"
+
+image: registry.gitlab.com/just-ci/images/python:$PYVERSION
+
+python:mypy:
+  stage: test
+  variables:
+    CHECK_PATH: "./${PYTHON_PACKAGE}"
+  script:
+    - echo "will run test on PYTHON_PACKAGE=${PYTHON_PACKAGE}"
+    - pip3 install . || true  # installs package only if available
+    - pip3 install mypy
+    - mkdir -p .mypy_cache
+    - mypy --install-types --non-interactive --junit-xml ${CI_PROJECT_DIR}/mypy-report.xml --exclude $MYPY_EXCLUDE_REGEX ${MYPY_DEFAULT_SETTINGS} ${MYPY_EXTRA_SETTINGS} ${CHECK_PATH}
+  artifacts:
+    reports:
+      junit: mypy-report.xml

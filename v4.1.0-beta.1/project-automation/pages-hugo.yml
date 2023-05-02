@@ -1,0 +1,40 @@
+---
+# Publishes a hugo repo as GitLab pages.
+# The job name must be pages for it to work.
+
+pages:
+  image: registry.gitlab.com/just-ci/images/hugo:latest
+  # Add a before script to add an external theme, for example:
+  # before_script:
+  #   - git clone https://github.com/matcornic/hugo-theme-learn.git themes/hugo-theme-learn
+  variables:
+    MINIFY: "false"
+    EXTRA_ARGS: ""
+  stage: build
+  script:
+    - |
+      if [ ${MINIFY} = "true" ]; then
+        hugo --minify ${EXTRA_ARGS}
+        /minify.sh .
+      else
+        hugo ${EXTRA_ARGS}
+      fi
+    - gzip -kr public
+  artifacts:
+    paths:
+      - public
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+pages:test:
+  extends: pages
+  stage: test
+  after_script:
+    - mv public test
+    - echo "[!] When browing the test job artifacts you may not see the full final result when opening an HTML file, as the built site may reference absolute or canonified URLs."
+  artifacts:
+    paths:
+      - test
+    when: always
+  rules:
+    - if: '$CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'

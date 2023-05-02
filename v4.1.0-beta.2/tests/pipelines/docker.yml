@@ -1,0 +1,17 @@
+---
+include:
+    - local: pipelines/docker.yml
+    - local: pipelines/workflow.yml
+
+variables:
+    MOCKUP_PROJECT: docker
+    KANIKO_REGISTRY_IMAGE: ${CI_REGISTRY_IMAGE}/${MOCKUP_PROJECT}
+    KANIKO_CONTEXT: ${CI_PROJECT_DIR}/tests/mockup_projects/docker/
+    KANIKO_DOCKERFILE: ${CI_PROJECT_DIR}/tests/mockup_projects/docker/Dockerfile
+
+before_script:
+    - cd tests/mockup_projects/docker
+
+grype:
+    variables:
+        GRYPE_FAIL_ON: ""

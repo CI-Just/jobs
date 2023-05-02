@@ -1,0 +1,18 @@
+---
+# https://pypi.org/project/tbump/
+image: registry.gitlab.com/notno/python-tests
+
+tbump:
+  stage: build
+  script:
+    - pip install tbump
+    - |
+      if [[ -v $NEXT_RELEASE_VERSION ]]
+      then
+        tbump $NEXT_RELEASE_VERSION --only-patch --non-interactive
+      else
+        echo "NEXT_RELEASE_VERSION variable unset, will not tbump files"
+      fi
+  artifacts:
+    paths:
+      - ./*

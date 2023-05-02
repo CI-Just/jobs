@@ -1,0 +1,46 @@
+# https://github.com/GoogleContainerTools/kaniko
+# kaniko is a tool to build container images from a Dockerfile, inside a container or Kubernetes cluster.
+# kaniko doesn't depend on a Docker daemon and executes each command within a Dockerfile completely in userspace
+
+.kaniko-template:
+  stage: build
+  variables:
+    USE_CACHE: "true"
+    DOCKERFILE: "Dockerfile"  # Can be a path
+    DEV_BUILD: "false"  # set true to tag an image for each commit
+    LABELS: "--label CI_PROJECT_URL=$CI_PROJECT_URL
+             --label CI_COMMIT_SHORT_SHA=$CI_COMMIT_SHORT_SHA
+             --label CI_COMMIT_REF_NAME=$CI_COMMIT_REF_NAME"
+    EXTRA_ARGS: ""  # See https://github.com/GoogleContainerTools/kaniko#additional-flags
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  script:
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+    - |
+      if [ -z "$DESTINATIONS" ]; then
+        if [ ! -z "$CI_COMMIT_BRANCH" ]; then
+          DESTINATIONS="--destination $CI_REGISTRY_IMAGE:$CI_COMMIT_BRANCH"
+          if [ "$CI_COMMIT_BRANCH" = "master" ]; then
+            DESTINATIONS="${DESTINATIONS} --destination $CI_REGISTRY_IMAGE:latest"
+          fi
+        fi
+        if [ ! -z "$CI_COMMIT_TAG" ]; then
+          DESTINATIONS="${DESTINATIONS} --destination $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG"
+        fi
+      fi
+    - |
+      if [ "$DEV_BUILD" = "true" ]; then
+        DESTINATIONS="${DESTINATIONS} --destination $CI_REGISTRY_IMAGE/dev:$CI_COMMIT_SHORT_SHA"
+      fi
+    - printf "Will use the following destinations:$DESTINATIONS\n" | sed 's/--destination /\n/g'
+    - /kaniko/executor --cache=$USE_CACHE --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/$DOCKERFILE $DESTINATIONS $LABELS $EXTRA_ARGS
+    - |
+      if [ "$PYTHON_TEST" = "true" ]; then
+        printf "\nRUN if ! python3 -m pip >/dev/null; then wget -q https://bootstrap.pypa.io/get-pip.py && python3 get-pip.py; fi" >> $CI_PROJECT_DIR/$DOCKERFILE
+        printf "\nRUN python3 -m pip install pytest pytest-cov pylint pylint_junit safety mutmut coverage" >> $CI_PROJECT_DIR/$DOCKERFILE
+        /kaniko/executor --cache=$USE_CACHE --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/$DOCKERFILE --destination $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME-testing $EXTRA_ARGS
+      fi
+  artifacts:
+    paths:
+      - "${CI_PROJECT_NAME}.tar"

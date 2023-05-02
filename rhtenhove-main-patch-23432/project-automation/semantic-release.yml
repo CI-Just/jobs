@@ -1,0 +1,78 @@
+---
+# https://github.com/semantic-release/semantic-release#commit-message-format
+# https://levelup.gitconnected.com/semantic-versioning-and-release-automation-on-gitlab-9ba16af0c21
+include:
+  - remote: https://jobs.just-ci.dev/rhtenhove-main-patch-23432/project-automation/generic.yaml
+  - remote: https://jobs.just-ci.dev/rhtenhove-main-patch-23432/project-automation/telemetry.yml
+
+variables:
+  RELEASE_CHANGELOG: "true"
+  DISABLE_AUTO_FIX_ASSETS: "false"
+
+semantic-release:
+  extends:
+    - .release:rules
+    - .telemetry
+  image: registry.gitlab.com/just-ci/images/node:latest
+  stage: .post
+  variables:
+    EXTRA_ARGS: ""
+    DEFAULT_RELEASERC: https://gitlab.com/just-ci/utils/-/raw/v1.1.0/semantic-release/gitlab-default.json
+    NPM_PACKAGES:
+      semantic-release @semantic-release/gitlab @semantic-release/git
+      @semantic-release/changelog @semantic-release/exec
+  script:
+    - !reference [".release:install", script]
+
+    - |
+      if ! test -f .releaserc; then
+        echo "[+] Using default .releaserc from ${DEFAULT_RELEASERC}."
+        wget "${DEFAULT_RELEASERC}" -qO .releaserc
+      fi
+
+    - |
+      if [ "$(dasel -f .releaserc -r json -m '(?:-=assets)')" = "[]" ] && [ "${DISABLE_AUTO_RELEASE_ASSETS}" = "" ]; then
+        echo "[-] No assets set in .releaserc."
+        if test -f tbump.toml; then
+          SOURCE_FILE=tbump.toml
+          DASEL_PATH=.file
+        elif test -f pyproject.toml; then
+          SOURCE_FILE=pyproject.toml
+          DASEL_PATH=.tool.tbump.file
+        else
+          echo "[-] No tbump.toml or pyproject.toml to retrieve assets. Not pushing assets."
+        fi
+      fi
+
+    - |
+      if [ "${SOURCE_FILE}" != "" ]; then
+        dasel --version
+        TBUMP_FILES=$(dasel -n -f ${SOURCE_FILE} -r toml -w yaml -m "${DASEL_PATH}.[*].src")
+        if [ "${TBUMP_FILES}" = "null" ]; then
+          echo "[-] No files set. Not pushing assets."
+        else
+          if [ "${RELEASE_CHANGELOG}" = "true" ]; then
+            TBUMP_FILES="${TBUMP_FILES} CHANGELOG.md"
+          fi
+          for FILE in ${TBUMP_FILES} ${SOURCE_FILE}; do
+            if [ "$(dasel -n -f .releaserc -p json -m '(?:-=assets).(?:.=${FILE})')" = "null" ]; then
+              dasel put string -f .releaserc -p json -m '(?:-=assets).[]' "${FILE}"
+              echo "[+] Added ${FILE} to .releaserc."
+            fi
+          done
+        fi
+      fi
+    - export GIT_AUTHOR_EMAIL="$(curl -s -X GET -H "PRIVATE-TOKEN:$GL_TOKEN"
+      "${CI_API_V4_URL}/user" | jq -r '.email')"
+    - export GIT_COMMITTER_EMAIL="${GIT_AUTHOR_EMAIL}"
+    - semantic-release --version
+    - semantic-release ${EXTRA_ARGS}
+  artifacts:
+    paths:
+      - .releaserc
+    when: always
+
+semantic-release:GL_TOKEN:
+  extends: .fix:GL_TOKEN
+  variables:
+    JOB_NAME: semantic-release

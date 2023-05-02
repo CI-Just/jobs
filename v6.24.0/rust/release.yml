@@ -1,0 +1,14 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/v6.24.0/rust/generic.yml
+
+rust:release:
+  extends: .rust
+  stage: deploy
+  script:
+    - cargo update
+    - cargo build --release --verbose
+  artifacts:
+    paths:
+      - target
+    when: always

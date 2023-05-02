@@ -1,0 +1,23 @@
+---
+include:
+  - remote: "https://jobs.just-ci.dev/v3.20.0-beta.7/project-automation/find-next-release.yml"
+  - remote: "https://jobs.just-ci.dev/v3.20.0-beta.7/project-automation/gitlab-recommended.yml"
+  - remote: "https://jobs.just-ci.dev/v3.20.0-beta.7/project-automation/semantic-release.yml"
+  - remote: "https://jobs.just-ci.dev/v3.20.0-beta.7/project-automation/badge.yml"
+  - remote: "https://jobs.just-ci.dev/v3.20.0-beta.7/project-automation/check-GL-token.yml"
+  - remote: "https://jobs.just-ci.dev/v3.20.0-beta.7/project-automation/tbump.yml"
+
+tbump:
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $GL_TOKEN
+      exists:
+        - 'pyproject.toml'
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $GL_TOKEN
+      exists:
+        - 'tbump.toml'
+
+badge:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'parent_pipeline'
+      when: never
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH

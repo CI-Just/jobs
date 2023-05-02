@@ -1,0 +1,87 @@
+---
+# This job will create or update a badge when extended using the following template.
+# It requires a Project Access Token or Personal Access Token with api scope set
+# as a CI/CD variable called GL_TOKEN.
+# To create your own automatic badges, add the following to your .gitlab-ci.yml:
+
+# badge:your_custom_job:
+#   extends: .badge
+#   variables:
+#     LABEL: "version"
+#     VALUE: "1.2.3"
+#     COLOR: "red"
+#     URL: "${CI_PROJECT_URL}"
+#     BADGE_NAME: ""  # Optional. Name of the badge in Settings. Defaults to $LABEL
+
+# Make sure your_custom_job is replaced and unique, and you've changed the variables
+# according to your preferences.
+
+# Choose a color from this list: https://github.com/jongracecox/anybadge#colors
+
+.badge:
+  image: registry.gitlab.com/just-ci/images/anybadge:latest
+  stage: .post
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - BADGE_NAME=${BADGE_NAME:-${LABEL}}
+    - IMAGE_URL=${CI_PROJECT_URL}/-/jobs/artifacts/${CI_DEFAULT_BRANCH}/raw/ci_badges/${BADGE_NAME}.svg?job=${CI_JOB_NAME}
+    - mkdir -p ci_badges
+    - anybadge -l "${LABEL}" -v "${VALUE}" -c "${COLOR}" -f
+      "ci_badges/${BADGE_NAME}.svg"
+    - |
+      echo "[+] Created ci_badges/${BADGE_NAME}.svg"
+      echo "Label: ${LABEL}"
+      echo "Value: ${VALUE}"
+      echo "Color: ${COLOR}"
+      echo "URL: ${URL}"
+      echo "Image URL: ${IMAGE_URL}"
+      echo "You can use the image URL to point to this badge from, for example, a readme."
+    - |
+      if [ "${DISABLE_BADGE_CREATION}" != "" ]; then
+        exit 0
+      fi
+    - |
+      echo "[*] Creating/updating badge..."
+      BADGE_ID=$(curl -SsLf -H "PRIVATE-TOKEN: ${GL_TOKEN}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/badges" | jq --arg BADGE_NAME "${BADGE_NAME}" '.[] | select(.name==$BADGE_NAME) | .id') || true
+      if [ -z "${BADGE_ID}" ]; then
+        echo "[-] Badge doesn't exist yet. We'll create a new one..."
+        STATUS_CODE=$(curl -SsL -w "%{http_code}" -X POST -H "PRIVATE-TOKEN: ${GL_TOKEN}" -d "image_url=${IMAGE_URL}&link_url=${URL:-$CI_PROJECT_URL}&name=${BADGE_NAME}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/badges" -o /dev/null)
+      else
+        echo "[*] Updating badge ID ${BADGE_ID}..."
+        STATUS_CODE=$(curl -SsL -w "%{http_code}" -X PUT -H "PRIVATE-TOKEN: ${GL_TOKEN}" -d "image_url=${IMAGE_URL}&link_url=${URL:-$CI_PROJECT_URL}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/badges/${BADGE_ID}" -o /dev/null)
+      fi
+
+      if [ "${STATUS_CODE:0:1}" = "2" ]; then
+        echo "[+] Badge set successfully."
+      elif [ "${STATUS_CODE}" = "403" ]; then
+        echo "[!] Access Forbidden. Does GL_TOKEN have access to badge creation? A Personal Access Token requires at least a Maintainer user."
+        exit 1
+      else
+        echo "[!] Something went wrong. We received the status code ${STATUS_CODE}."
+        exit 1
+      fi
+  artifacts:
+    paths:
+      - ci_badges/*.svg
+    when: always
+  allow_failure: true
+  rules:
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+
+badge:GL_TOKEN-required:
+  stage: .pre
+  image: docker.io/alpine:3
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - |
+      echo "[!] GL_TOKEN not set. Please add a GL_TOKEN per the instructions: https://gitlab.com/just-ci/templates#how-to-use"
+      echo "[!] Badges will not be created automatically, but will be available for use elsewhere."
+      echo "[!] You can disable this warning by setting a variable called DISABLE_BADGE_CREATION in your .gitlab-ci.yml."
+    - exit 1
+  rules:
+    - if:
+        "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $GL_TOKEN == null &&
+        $DISABLE_BADGE_CREATION == null"
+  allow_failure: true

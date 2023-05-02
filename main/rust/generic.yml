@@ -1,0 +1,15 @@
+---
+variables:
+  CARGO_HOME: ${CI_PROJECT_DIR}/.cargo
+  RUSTFLAGS: -Dwarnings
+
+image:
+  name: docker.io/rust:slim
+  entrypoint: [""]
+
+.rust:
+  cache:
+    paths:
+      - .cargo
+      - target
+  needs: []

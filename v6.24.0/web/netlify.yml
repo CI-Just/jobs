@@ -1,0 +1,45 @@
+---
+# Builds a site using hugo, to then deploy to Netlify
+# Requires setting SITE_DOMAIN variable
+
+include:
+  - remote: https://jobs.just-ci.dev/v6.24.0/web/hugo.yml
+
+.netlify:
+  extends: .hugo
+  variables:
+    HUGO_BASEURL: https://${SITE_DOMAIN}
+  script:
+    - !reference [.hugo, script]
+    - |
+      echo "netlify args: ${NETLIFY_DEFAULT_ARGS} ${NETLIFY_EXTRA_ARGS}"
+    - netlify deploy ${NETLIFY_DEFAULT_ARGS} ${NETLIFY_EXTRA_ARGS} --site
+      ${NETLIFY_SITE_ID} --auth ${NETLIFY_AUTH_TOKEN}
+
+netlify:
+  extends: .netlify
+  variables:
+    NETLIFY_DEFAULT_ARGS: --prod
+  environment:
+    name: production
+    url: ${SITE_DOMAIN}
+  rules:
+    - if:
+        "$CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH && $NETLIFY_AUTH_TOKEN &&
+        $NETLIFY_SITE_ID && $SITE_DOMAIN"
+
+netlify:branch:
+  extends: .netlify
+  variables:
+    ALIAS: ${CI_COMMIT_REF_SLUG}
+    SITE_DOMAIN: ${ALIAS}--${NETLIFY_SITE_ID}.netlify.app
+    ENVIRONMENT: staging
+    HUGO_EXTRA_ARGS: --environment ${ENVIRONMENT}
+    NETLIFY_DEFAULT_ARGS: --alias "${ALIAS}"
+  environment:
+    name: ${ENVIRONMENT}
+    url: ${SITE_DOMAIN}
+  rules:
+    - if:
+        "$CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH && $NETLIFY_AUTH_TOKEN &&
+        $NETLIFY_SITE_ID && $SITE_DOMAIN"

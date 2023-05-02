@@ -1,0 +1,16 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/v6.8.4/python/generic.yml
+
+python:build:
+  extends: .python:pre
+  stage: build
+  variables:
+    JOB_PACKAGE: build
+  script:
+    - !reference [".python:pre", script]
+    - python -m build . --outdir ${CI_PROJECT_DIR}/dist
+  artifacts:
+    paths:
+      - dist
+  needs: []

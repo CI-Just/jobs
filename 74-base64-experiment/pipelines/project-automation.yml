@@ -1,0 +1,15 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/74-base64-experiment/project-automation/workflow.yml
+  - remote: https://jobs.just-ci.dev/74-base64-experiment/project-automation/find-next-release.yml
+  - remote: https://jobs.just-ci.dev/74-base64-experiment/project-automation/gitlab-recommended.yml
+  - remote: https://jobs.just-ci.dev/74-base64-experiment/project-automation/semantic-release.yml
+  - remote: https://jobs.just-ci.dev/74-base64-experiment/project-automation/generic.yaml
+  - remote: https://jobs.just-ci.dev/74-base64-experiment/python/tbump.yml
+
+tbump:
+  extends:
+    - .python:pre
+    - .release:rules
+  needs:
+    - find-next-release

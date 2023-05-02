@@ -1,0 +1,35 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/HEAD/python/generic.yml
+
+variables:
+  PYUPGRADE_ARGS: "auto" # if equal to 'auto', the job extracts the minimal python version from PYVERSION and passes this to pyupgrade (e.g. if PYVERSION=3.10-slim then --py310-plus is passed to pyupgrade)
+  PYUPGRADE_EXTRA_ARGS: ""
+
+python:pyupgrade:
+  extends: .python:pre
+  image: registry.gitlab.com/just-ci/images/anybadge:latest
+  variables:
+    JOB_PACKAGE: pyupgrade
+  script:
+    - !reference [".python:pre", script]
+    - |
+      if [ "$PYUPGRADE_ARGS" == "auto" ]; then
+        PYUPGRADE_ARGS="--py$(echo ${PYVERSION} | cut -d- -f1 | tr -d .)-plus"
+        echo "[*] Detected PYUPGRADE_ARGS='auto', setting PYUPGRADE_ARGS to '$PYUPGRADE_ARGS'."
+      fi
+    - PYUPGRADE_TARGET=$(find * -type f -regex '.*.pyi?' | sed -E
+      "/${PYTHON_EXCLUDE_REGEX}/d")
+    - pyupgrade $PYUPGRADE_TARGET $PYUPGRADE_ARGS $PYUPGRADE_EXTRA_ARGS ||
+      exit_code=$? # delay exit
+    - |
+      if [ ! -z $exit_code ]; then
+        git --no-pager diff --minimal
+        echo "[!] Not all Python files adhere to the latest syntax. The suggestions displayed above can be applied by running 'pyupgrade <path_to_python_file> $PYUPGRADE_ARGS'."
+        exit $exit_code
+      else
+        echo "[+] All Python files adhere to the latest syntax."
+      fi
+  needs:
+    - []
+  allow_failure: true

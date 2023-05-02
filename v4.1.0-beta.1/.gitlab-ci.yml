@@ -1,0 +1,89 @@
+---
+# CI of ci/templates itself
+
+stages:
+  - test
+  - pre-release
+
+variables:
+  SCHEDULE_PIPELINE_PROJECT_IDS: "30771297 30771293 30771284 30771254 30771239"
+
+include:
+  - local: pipelines/project-automation.yml
+  - local: pipelines/workflow.yml
+  - local: yaml/yamllint.yml
+  - local: project-automation/pipeline-scheduler.yml
+
+gitlab:recommended:
+  variables:
+    GITLAB_RECOMMENDED_AUTO_FIX: "true"
+
+tbump:
+  stage: pre-release
+
+badge:test:
+  extends: .badge
+  stage: test
+  variables:
+    NAME: "branch"
+    MESSAGE: "${CI_COMMIT_REF_NAME}"
+    COLOR: "fuchsia"
+
+# child pipeline to unit tests all our jobs
+
+jobs:c:
+  stage: test
+  trigger:
+    include:
+      - local: tests/jobs/c.yml
+    strategy: depend
+
+jobs:docker:
+  stage: test
+  trigger:
+    include:
+      - local: tests/jobs/docker.yml
+    strategy: depend
+
+jobs:docs:
+  stage: test
+  trigger:
+    include:
+      - local: tests/jobs/docs.yml
+    strategy: depend
+
+jobs:python:
+  stage: test
+  trigger:
+    include:
+      - local: tests/jobs/python.yml
+    strategy: depend
+
+# child pipelines to test our off-the-shelves pipelines
+pipelines:c:
+  stage: test
+  trigger:
+    include:
+      - local: tests/pipelines/c.yml
+    strategy: depend
+
+pipelines:docker:
+  stage: test
+  trigger:
+    include:
+      - local: tests/pipelines/docker.yml
+    strategy: depend
+
+pipelines:python:
+  stage: test
+  trigger:
+    include:
+      - local: tests/pipelines/python.yml
+    strategy: depend
+
+pipelines:python&docker:
+  stage: test
+  trigger:
+    include:
+      - local: tests/pipelines/python-docker.yml
+    strategy: depend

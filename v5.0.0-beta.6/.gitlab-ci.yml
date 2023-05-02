@@ -1,0 +1,103 @@
+---
+# CI of ci/templates itself
+
+variables:
+  SCHEDULE_PIPELINE_PROJECT_IDS: "30771297 30771293 30771284 30771254 30771239"
+
+include:
+  - local: pipelines/project-automation.yml
+  - local: pipelines/workflow.yml
+  - local: yaml/yamllint.yml
+  - local: project-automation/pipeline-scheduler.yml
+  - local: project-automation/pages-hugo.yml
+
+gitlab:recommended:
+  variables:
+    GITLAB_RECOMMENDED_AUTO_FIX: "true"
+
+badge:test:
+  extends: .badge
+  stage: test
+  variables:
+    NAME: "branch"
+    VALUE: "${CI_COMMIT_REF_NAME}"
+    COLOR: "fuchsia"
+  rules:
+    - if: $GL_TOKEN
+      when: never
+    - when: always
+
+pages:
+  stage: test
+  before_script:
+    - cd tests/mockup_projects/pages
+    - git clone https://github.com/alexandrevicenzi/soho.git themes/soho
+    - mkdir content
+    - cp ${CI_PROJECT_DIR}/README.md content/index.md
+  needs: []
+
+# child pipeline to unit tests all our jobs
+
+jobs:c:
+  stage: test
+  trigger:
+    include:
+      - local: tests/jobs/c.yml
+    strategy: depend
+
+jobs:container:
+  stage: test
+  trigger:
+    include:
+      - local: tests/jobs/container.yml
+    strategy: depend
+
+jobs:docs:
+  stage: test
+  trigger:
+    include:
+      - local: tests/jobs/docs.yml
+    strategy: depend
+
+jobs:python:
+  stage: test
+  trigger:
+    include:
+      - local: tests/jobs/python.yml
+    strategy: depend
+
+# child pipelines to test our off-the-shelves pipelines
+pipelines:c:
+  stage: test
+  trigger:
+    include:
+      - local: tests/pipelines/c.yml
+    strategy: depend
+
+pipelines:python:
+  stage: test
+  trigger:
+    include:
+      - local: tests/pipelines/python.yml
+    strategy: depend
+
+pipelines:container:polirepo:
+  stage: test
+  trigger:
+    include:
+      - local: tests/pipelines/container/polirepo.yml
+    strategy: depend
+
+pipelines:container:monorepo:
+  stage: test
+  trigger:
+    include:
+      - local: tests/pipelines/container/monorepo.yml
+    strategy: depend
+
+pipelines:container:python:
+  stage: test
+  trigger:
+    include:
+      - local: tests/pipelines/container/python.yml
+    strategy: depend

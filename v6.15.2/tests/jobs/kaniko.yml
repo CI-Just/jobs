@@ -1,0 +1,9 @@
+---
+include:
+  - local: tests/jobs/container.yml
+
+variables:
+  IMAGE_NAME: ${CI_REGISTRY_IMAGE}/kaniko
+
+.image:build:
+  extends: .kaniko

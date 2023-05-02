@@ -1,0 +1,54 @@
+---
+.telemetry:
+  after_script:
+    - Exit 2>/dev/null || true # Exit if in Powershell
+    - |
+      if [ "${TELEMETRY_OPTOUT}" = "" ]; then
+        DATA="CI_JOB_NAME=\"${CI_JOB_NAME}\",\
+        CI_JOB_STAGE=\"${CI_JOB_STAGE}\",\
+        CI_JOB_STATUS=\"${CI_JOB_STATUS}\",\
+        CI_JOB_STARTED_AT=\"${CI_JOB_STARTED_AT}\",\
+        CI_KUBERNETES_ACTIVE=\"${CI_KUBERNETES_ACTIVE}\",\
+        CI_PIPELINE_SOURCE=\"${CI_PIPELINE_SOURCE}\",\
+        CI_PIPELINE_CREATED_AT=\"${CI_PIPELINE_CREATED_AT}\",\
+        CI_PROJECT_VISIBILITY=\"${CI_PROJECT_VISIBILITY}\",\
+        CI_RUNNER_EXECUTABLE_ARCH=\"${CI_RUNNER_EXECUTABLE_ARCH}\",\
+        CI_RUNNER_REVISION=\"${CI_RUNNER_REVISION}\",\
+        CI_RUNNER_VERSION=\"${CI_RUNNER_VERSION}\",\
+        CI_SERVER_REVISION=\"${CI_SERVER_REVISION}\",\
+        CI_SERVER_VERSION=\"${CI_SERVER_VERSION}\",\
+        CI_SHARED_ENVIRONMENT=\"${CI_SHARED_ENVIRONMENT}\""
+
+        DATA=$(echo ${DATA} | tr -d ' ')
+
+        echo "[*] Sending telemetry to https://influxdb.just-ci.dev"
+        if [ "${TELEMETRY_DEBUG}" != "" ]; then
+          echo "${DATA}"
+        fi
+
+        URL="https://influxdb.just-ci.dev/write?db=templatemetrics"
+        HEADER="Authorization: Token Ns1RX9mpNnBQAH_KYIKm6WL-ZCXT9Sju5q1C_2NweISHZyJ8nvSg7Q78KYsps0En-F4qQMp7JL4b2Sa6-TIvlA=="
+        POST_DATA="jobRun ${DATA}"
+
+        if command -v curl > /dev/null; then
+          TELEMETRY_USE_CURL=1
+        elif command -v wget > /dev/null; then
+          TELEMETRY_USE_WGET=1
+        elif command -v apk > /dev/null; then
+          apk add -q wget
+          TELEMETRY_USE_WGET=1
+        elif command -v apt-get > /dev/null; then
+          apt-get update -qq && apt-get install -qqy wget 2>&1 >/dev/null
+          TELEMETRY_USE_WGET=1
+        fi
+
+        if [ "${TELEMETRY_USE_CURL}" != "" ]; then
+          curl -sL -XPOST "${URL}" --header "${HEADER}" --data-binary "${POST_DATA},tool=\"curl\"" >/dev/null 2>&1 || echo "[-] Failed to send."
+        elif [ "${TELEMETRY_USE_WGET}" != "" ]; then
+          wget -qO /dev/null --header "${HEADER}" --post-data "${POST_DATA},tool=\"wget\"" "${URL}" >/dev/null 2>&1 || echo "[-] Failed to send."
+        else
+          echo "[!] curl or wget not available nor installable. Not sending telemetry."
+        fi
+      else
+        echo "[-] Telemetry disabled. Consider enabling it. We do not collect any data that could identify you or any projects you are working on."
+      fi

@@ -1,0 +1,16 @@
+---
+include:
+  - local: docker/kaniko.yml
+  - local: docker/grype.yml
+  - local: docker/compose/config.yml
+  - local: pipelines/workflow.yml
+
+variables:
+  KANIKO_REGISTRY_IMAGE: ${CI_REGISTRY_IMAGE}/docker
+  KANIKO_CONTEXT: tests/mockup_projects/docker
+  KANIKO_DOCKERFILE: tests/mockup_projects/docker/Dockerfile
+  COMPOSE_FILE: tests/mockup_projects/docker/docker-compose.yml
+
+grype:
+  variables:
+    GRYPE_FAIL_ON: ""

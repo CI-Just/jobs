@@ -1,0 +1,18 @@
+---
+include:
+  - local: project-automation/workflow.yml
+  - local: docs/md-presentation.yml
+  - local: docs/latex.yml
+  - local: docs/report-pandoc.yml
+
+docs:pandoc-from-template:
+  variables:
+    SOURCE_DIR: tests/mockup_projects/docs/pandoc
+
+docs:latex:
+  variables:
+    LATEX_DIR: tests/mockup_projects/docs/latex
+  rules:
+    - changes:
+        - docs/latex.yml
+        - tests/mockup_projects/docs/latex

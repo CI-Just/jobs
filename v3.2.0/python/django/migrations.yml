@@ -1,0 +1,18 @@
+# You may optionally prepare the environment if you don't have a required database
+# available. The following before_script creates a directory where the sqlite3.db will
+# be created, and we cd to a folder where manage.py is located.
+
+#   before_script:
+#     - mkdir /db
+#     - cd app
+
+python:django:migrations:
+  stage: test
+  image: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
+  script:
+    - STATE="$(python manage.py makemigrations --dry-run)"
+    - |
+      if [ ! "$STATE" = "No changes detected" ]; then
+        echo "[!] You have model changes for which no migrations have been created."
+        exit 1
+      fi

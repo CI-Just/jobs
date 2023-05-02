@@ -1,0 +1,15 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/v6.22.0/python/generic.yml
+
+variables:
+  LIZARD_DEFAULT_ARGS: --verbose -Eduplicate --exclude "${PYTHON_EXCLUDE_PATHS}"
+
+python:lizard:
+  extends: .python:pre
+  variables:
+    JOB_PACKAGE: lizard
+  script:
+    - !reference [".python:pre", script]
+    - lizard -t $(nproc) ${LIZARD_DEFAULT_ARGS} ${LIZARD_EXTRA_ARGS}
+  needs: []

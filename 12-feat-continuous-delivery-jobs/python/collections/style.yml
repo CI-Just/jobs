@@ -1,0 +1,4 @@
+---
+include:
+  - remote: "https://jobs.just-ci.dev/12-feat-continuous-delivery-jobs/python/black.yml"
+  - remote: "https://jobs.just-ci.dev/12-feat-continuous-delivery-jobs/python/isort.yml"

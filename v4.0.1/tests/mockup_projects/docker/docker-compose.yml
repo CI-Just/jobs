@@ -1,0 +1,7 @@
+---
+version: "3.8"
+
+services:
+    useless:
+        image: alpine:latest
+        command: echo "I'm useless"

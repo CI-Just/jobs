@@ -1,0 +1,36 @@
+---
+.kube-context:
+  image: registry.gitlab.com/gitlab-org/cluster-integration/cluster-applications:latest
+  before_script:
+    - gl-use-kube-context
+    - chmod 400 $KUBECONFIG  # Removes security warnings. https://gitlab.com/gitlab-org/project-templates/cluster-management/-/merge_requests/51#note_936576634
+
+# It is recommended to run this job on your own runner, as it can easily eat up all your CI
+# minutes. Adding the following to your .gitlab-ci.yml will run it on your cluster runner:
+# k8s:sonobuoy:
+#   tags:
+#     - cluster
+
+k8s:sonobuoy:
+  extends: .kube-context
+  stage: .post
+  script:
+    - >
+      wget -qO- $(wget -qO- https://api.github.com/repos/vmware-tanzu/sonobuoy/releases/latest |
+      grep "browser_download_url.*linux_amd64" |
+      cut -d : -f 2,3 |
+      tr -d \") |
+      tar xzf - -C /usr/local/bin
+    - sonobuoy delete --wait  # Cleanup if an old state was left behind
+    - sonobuoy run --wait
+    - RESULTS_FILE=$(sonobuoy retrieve)
+    - sonobuoy results ${RESULTS_FILE}
+  after_script:
+    - sonobuoy delete --wait
+  environment:
+    name: production
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  artifacts:
+    paths:
+      - "*sonobuoy*.tar.gz"

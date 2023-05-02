@@ -1,0 +1,11 @@
+---
+include:
+  - local: pipelines/web/pages-hugo.yml
+
+.hugo:
+  before_script:
+    - cd tests/mockup_projects/hugo
+    - git clone https://github.com/adityatelange/hugo-PaperMod themes/PaperMod
+      --depth=1
+    - mkdir -p content
+    - cp ${CI_PROJECT_DIR}/container/readme.md content/_index.md

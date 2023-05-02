@@ -1,0 +1,37 @@
+---
+include:
+  - local: pipelines/container/monorepo.yml
+  - local: pipelines/workflow.yml
+
+variables:
+  GRYPE_FAIL_ON_THRESHOLD: ""
+
+kaniko:image_A:
+  extends: .kaniko:monorepo
+  variables:
+    KANIKO_CONTEXT: ${CI_PROJECT_DIR}/tests/mockup_projects/container/monorepo/image_A
+    KANIKO_REGISTRY_IMAGE: ${CI_REGISTRY_IMAGE}/a
+    KANIKO_DOCKERFILE: ${CI_PROJECT_DIR}/tests/mockup_projects/container/monorepo/image_A/Dockerfile
+
+kaniko:image_B:
+  extends: .kaniko:monorepo
+  variables:
+    KANIKO_CONTEXT: ${CI_PROJECT_DIR}/tests/mockup_projects/container/monorepo/image_B
+    KANIKO_REGISTRY_IMAGE: ${CI_REGISTRY_IMAGE}/b
+    KANIKO_DOCKERFILE: ${CI_PROJECT_DIR}/tests/mockup_projects/container/monorepo/image_B/Dockerfile
+
+grype:image_A:
+  extends: .grype:monorepo
+  variables:
+    GRYPE_CONTEXT: a
+    GRYPE_IMAGE: ${CI_REGISTRY_IMAGE}/a:${KANIKO_DEV_TAG}
+  needs: ["kaniko:image_A"]
+  allow_failure: false
+
+grype:image_B:
+  extends: .grype:monorepo
+  variables:
+    GRYPE_CONTEXT: b
+    GRYPE_IMAGE: ${CI_REGISTRY_IMAGE}/b:${KANIKO_DEV_TAG}
+  needs: ["kaniko:image_B"]
+  allow_failure: false

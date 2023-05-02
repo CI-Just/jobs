@@ -1,0 +1,20 @@
+# pytest is the most popular python framework to perform unit tests
+# https://docs.pytest.org/en/stable/
+
+# currently testcontainers tests will hang forever if the gitlab runner is running in docker
+# use a regular runner or skip the tests by checking for env variable "CI"
+
+python:pytest:
+  image: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME-testing
+  stage: test
+  variables:
+    PYTEST_COVERAGE_THRESHOLD: "25"
+    TESTS_PATH: "tests/"  # Can also be a single .py file
+    CHECK_PATH: "./${PYTHON_PACKAGE}"
+    EXTRA_ARGS: ""  # Set optional arguments
+  script:
+    - pip show pytest
+    - python -m pytest ${EXTRA_ARGS} -vv --cov=${CHECK_PATH} --cov-fail-under=${PYTEST_COVERAGE_THRESHOLD} --junitxml=${CI_PROJECT_DIR}/pytest-report.xml ${TESTS_PATH}
+  artifacts:
+    reports:
+      junit: pytest-report.xml

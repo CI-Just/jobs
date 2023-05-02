@@ -1,0 +1,6 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/v6.24.0/project-automation/workflow.yml
+  - remote: https://jobs.just-ci.dev/v6.24.0/rust/clippy.yml
+  - remote: https://jobs.just-ci.dev/v6.24.0/rust/test.yml
+  - remote: https://jobs.just-ci.dev/v6.24.0/rust/release.yml

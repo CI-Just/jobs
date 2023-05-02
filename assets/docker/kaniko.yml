@@ -1,0 +1,24 @@
+---
+# https://github.com/GoogleContainerTools/kaniko
+
+# DEV image&tag: the one to always be used for followup jobs (in branches, master, tags etc)
+# global variable for easy override
+variables:
+  KANIKO_REGISTRY_IMAGE: ${CI_REGISTRY_IMAGE}
+  KANIKO_TAG: ${CI_COMMIT_SHORT_SHA}
+  KANIKO_DEV_TAG: dev-${CI_COMMIT_SHORT_SHA}  # allows registry cleanup policy
+  KANIKO_CONTEXT: ${CI_PROJECT_DIR}
+  KANIKO_DOCKERFILE: "Dockerfile"  # Can be a path
+  KANIKO_EXTRA_ARGS: ""  # See https://github.com/GoogleContainerTools/kaniko#additional-flags
+  KANIKO_CACHE: "true"
+
+kaniko:
+  stage: build
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  variables:
+    KANIKO_DEV_TAG: dev-${CI_COMMIT_SHORT_SHA}  # allows registry cleanup policy
+  script:
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$(echo -n ${CI_REGISTRY_USER}:${CI_REGISTRY_PASSWORD} | base64)\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor --cache=${KANIKO_CACHE} --context=${KANIKO_CONTEXT} --dockerfile=${KANIKO_DOCKERFILE} --destination=${KANIKO_REGISTRY_IMAGE}:${KANIKO_DEV_TAG} --destination=${KANIKO_REGISTRY_IMAGE}:${KANIKO_TAG} ${LABELS} ${KANIKO_EXTRA_ARGS}

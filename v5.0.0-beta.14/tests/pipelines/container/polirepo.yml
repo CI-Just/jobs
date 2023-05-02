@@ -1,0 +1,21 @@
+---
+include:
+    - local: pipelines/container/polirepo.yml
+    - local: pipelines/workflow.yml
+
+variables:
+    KANIKO_REGISTRY_IMAGE: ${CI_REGISTRY_IMAGE}/container-polirepo
+    GRYPE_IMAGE: ${CI_REGISTRY_IMAGE}/container-polirepo:dev-${CI_COMMIT_SHORT_SHA}
+    KANIKO_CONTEXT: ${CI_PROJECT_DIR}/tests/mockup_projects/container/polirepo
+    KANIKO_DOCKERFILE: ${CI_PROJECT_DIR}/tests/mockup_projects/container/polirepo/Dockerfile
+    GRYPE_FAIL_ON_THRESHOLD: ""
+
+before_script:
+    - cd tests/mockup_projects/container/polirepo
+
+grype:
+    allow_failure: false
+    artifacts:
+        paths:
+            - /tests/mockup_projects/container/polirepo/${CI_COMMIT_SHORT_SHA}.json
+            - /tests/mockup_projects/container/polirepo/${CI_COMMIT_SHORT_SHA}.txt

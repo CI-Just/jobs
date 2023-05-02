@@ -1,0 +1,16 @@
+---
+# safety checks your installed python dependencies for known
+# security vulnerabilities
+# https://pypi.org/project/safety/
+
+# This variable tells the kaniko job to add python testing
+# packages to a separate testing image
+variables:
+  PYTHON_TEST: "true"
+
+python:safety:
+  stage: test
+  image: ${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_NAME}-testing
+  script:
+    - pip show safety
+    - safety check

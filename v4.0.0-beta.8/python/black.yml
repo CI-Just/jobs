@@ -1,0 +1,13 @@
+---
+# black is the uncompromising python code formatter
+# https://github.com/psf/black
+python:black:
+  image: registry.gitlab.com/notno/ci/images/python:latest
+  stage: test
+  variables:
+    CHECK_PATH: "./${PYTHON_PACKAGE}"
+    EXCLUDE: ""  # Can be left blank. For Django use /migrations/
+  script:
+    - pip install black
+    - black --check --diff --color ${CHECK_PATH} --exclude=${EXCLUDE}
+  needs: []

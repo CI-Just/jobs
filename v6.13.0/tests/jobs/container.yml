@@ -1,0 +1,11 @@
+---
+include:
+  - local: pipelines/container.yml
+
+variables:
+  IMAGE_CONTEXT: tests/mockup_projects/container/polyrepo
+
+grype:
+  variables:
+    GRYPE_FAIL_ON_THRESHOLD: ""
+  allow_failure: false

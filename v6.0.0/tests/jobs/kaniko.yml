@@ -1,0 +1,16 @@
+---
+include:
+  - local: container/kaniko.yml
+  - local: container/grype.yml
+  - local: container/compose/config.yml
+  - local: pipelines/workflow.yml
+
+variables:
+  IMAGE_NAME: ${CI_REGISTRY_IMAGE}/kaniko
+  IMAGE_CONTEXT: tests/mockup_projects/container/polyrepo
+  COMPOSE_FILE: tests/mockup_projects/container/polyrepo/docker-compose.yml
+
+grype:
+  variables:
+    GRYPE_FAIL_ON_THRESHOLD: ""
+  allow_failure: false

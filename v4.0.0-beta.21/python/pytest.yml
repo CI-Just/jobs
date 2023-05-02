@@ -1,0 +1,30 @@
+---
+# Add plugins by changing INSTALL_PYTEST_PLUGINS.
+# See https://docs.pytest.org/en/latest/reference/plugin_list.html for available plugins
+
+variables:
+  PYVERSION: "latest"
+
+image: registry.gitlab.com/just-ci/images/python:$PYVERSION
+
+python:pytest:
+  stage: test
+  variables:
+    PYTEST_COVERAGE_THRESHOLD: "25"
+    INSTALL_PYTEST_PLUGINS: "pytest-asyncio pytest-xdist"  # See https://docs.pytest.org/en/latest/reference/plugin_list.html
+    CHECK_PATH: "./${PYTHON_PACKAGE}"
+    DEFAULT_ARGS: "-vvv --capture=tee-sys -o log_cli=true -o log_cli_level=DEBUG --color=yes"
+    EXTRA_ARGS: ""  # Set optional arguments
+  script:
+    - echo "will run test on PYTHON_PACKAGE=${PYTHON_PACKAGE}"
+    - pip3 install . || true  # installs package only if available
+    - pip3 install pytest pytest-cov ${INSTALL_PYTEST_PLUGINS}
+    - python3 -m pytest --cov=${CHECK_PATH} --cov-fail-under=${PYTEST_COVERAGE_THRESHOLD} --junitxml=${CI_PROJECT_DIR}/pytest-report.xml --cov-report xml:${CI_PROJECT_DIR}/pytest-coverage.xml -o cache_dir=${CI_PROJECT_DIR}/.pytest_cache ${DEFAULT_ARGS} ${EXTRA_ARGS}
+  artifacts:
+    reports:
+      junit: pytest-report.xml
+      cobertura: pytest-coverage.xml
+  cache:
+    key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
+    paths:
+      - .pytest_cache

@@ -1,0 +1,17 @@
+# mutmut is a tool to perform mutation testing on python
+# https://mutmut.readthedocs.io/en/latest/
+
+python:mutmut:
+  stage: test
+  image: ${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_NAME}-testing
+  script:
+    - pip show pytest
+    - pip show mutmut
+    - mkdir project && mv ${PYTHON_PACKAGE} project/ && mv tests project/ && cd project
+    - coverage run -m pytest tests
+    - mutmut run --paths-to-mutate=${PYTHON_PACKAGE} --tests-dir=tests --use-coverage || true 
+    - mutmut junitxml --suspicious-policy=skipped --untested-policy=failure > ${CI_PROJECT_DIR}/mutmut-report.xml
+    - mutmut run --paths-to-mutate=${PYTHON_PACKAGE} --tests-dir=tests --use-coverage
+  artifacts:
+    reports:
+      junit: mutmut-report.xml

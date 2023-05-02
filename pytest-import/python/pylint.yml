@@ -1,0 +1,28 @@
+---
+# pylint checks the quality of your code
+# https://www.pylint.org
+
+# Use pyproject.toml to configure pylint. For example:
+# [tool.pylint.messages_control]
+# disable = ["C0114", "C0115", "unsubscriptable-object", "too-many-lines"]
+include:
+  - remote: https://jobs.just-ci.dev/pytest-import/python/generic.yml
+
+variables:
+  PYLINT_THRESHOLD: "6"
+  PYLINT_EXTRA_ARGS: ""
+
+python:pylint:
+  extends: .python:pre-install
+  variables:
+    JOB_PACKAGE: pylint pylint-junit pylint-gitlab
+  script:
+    - !reference [".python:pre", script]
+    - !reference [".python:pre-install", script]
+    - pylint --fail-under ${PYLINT_THRESHOLD} ${PYLINT_EXTRA_ARGS}
+      --output-format=pylint_junit.JUnitReporter:${CI_PROJECT_DIR}/pylint-report.xml,pylint_gitlab.GitlabCodeClimateReporter:${CI_PROJECT_DIR}/code-climate.json,colorized
+      --ignore-paths=${PYTHON_EXCLUDE_PATHS} **/*.py
+  artifacts:
+    reports:
+      junit: pylint-report.xml
+      codequality: code-climate.json

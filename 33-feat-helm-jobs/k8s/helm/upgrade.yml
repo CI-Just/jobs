@@ -1,0 +1,36 @@
+---
+variables:
+  DEPLOYMENT_DOMAIN_NAME: example.com
+  HELM_CHART_NAME: my-chart
+  HELM_REPO_NAME: myrepo
+  HELM_REPO_URL: https://charts.myrepo.com
+  HELM_UPGRADE_EXTRA_ARGS: ""
+  HELM_NAMESPACE: ${HELM_CHART_NAME}-${CI_ENVIRONMENT_SLUG}
+  HELM_RELEASE: ${HELM_CHART_NAME}
+  HELM_VALUES_FILE: values.yaml
+  KUBE_CONTEXT: path/to/agent/repo:youragent-name
+
+.helm:
+  stage: deploy
+  image: alpine/k8s:1.22.9
+  before_script:
+    - kubectl config get-contexts
+    - kubectl config use-context ${KUBE_CONTEXT}
+
+.helm:upgrade:
+  extends: .helm
+  environment:
+    url: https://${CI_ENVIRONMENT_SLUG}.${DEPLOYMENT_DOMAIN}
+  rules:
+    - if: $CI_COMMIT_BRANCH
+  script:
+    - helm repo add ${HELM_REPO_NAME} ${HELM_REPO_URL}
+    - helm upgrade --install ${HELM_RELEASE} ${HELM_REPO_NAME}/${HELM_CHART_NAME} --values ${HELM_VALUES_FILE} --create-namespace --namespace=${HELM_NAMESPACE} ${HELM_UPGRADE_EXTRA_ARGS}
+
+.helm:uninstall:
+  extends: .helm
+  environment:
+    action: stop
+  script:
+    - helm uninstall ${HELM_RELEASE}
+  when: manual

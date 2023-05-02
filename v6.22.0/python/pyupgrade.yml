@@ -1,0 +1,43 @@
+---
+# PYUPGRADE_TARGET_VERSION should be the major and minor version, i.e. 3.9 or 3.11.
+
+include:
+  - remote: https://jobs.just-ci.dev/v6.22.0/python/generic.yml
+
+python:pyupgrade:
+  extends: .python:pre
+  variables:
+    JOB_PACKAGE: pyupgrade
+  script:
+    - !reference [".python:pre", script]
+    - |
+      if [ "${PYUPGRADE_TARGET_VERSION}" == "" ]; then
+        PYUPGRADE_TARGET_VERSION="$(python -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')"
+      fi
+    - |
+      PYUPGRADE_TARGETS=$(find . -type f -regex '.*.pyi?' -and -regextype egrep -not -regex ".*${PYTHON_EXCLUDE_REGEX:-($^)}.*")
+      PYUPGRADE_FILE_COUNT="$(echo ${PYUPGRADE_TARGETS} | wc -w)"
+      echo "[*] Checking ${PYUPGRADE_FILE_COUNT} files..."
+    - |
+      pyupgrade --py${PYUPGRADE_TARGET_VERSION/.}-plus ${PYUPGRADE_EXTRA_ARGS} ${PYUPGRADE_TARGETS} || EXIT_CODE=$?
+    - |
+      if [ ! "${EXIT_CODE}" = "" ]; then
+        if ! command -v git >/dev/null; then
+          if command -v apk >/dev/null; then
+            apk add -q git
+          elif command -v apt-get >/dev/null; then
+            apt-get update -qq && apt-get install -qqy git
+          else
+            echo "[!] Unable to install git to display diff."
+          fi
+        fi
+        if command -v git >/dev/null; then
+          git --no-pager diff --minimal
+        fi
+        echo "[!] Apply the syntax for Python ${PYUPGRADE_TARGET_VERSION} using:"
+        echo 'pyupgrade $(find * -type f -regex ".*.pyi?" | sed -E "/'${PYTHON_EXCLUDE_REGEX}'/d") --py'${PYUPGRADE_TARGET_VERSION/.}'-plus'
+        exit ${EXIT_CODE}
+      else
+        echo "[+] All files adhere to the Python ${PYUPGRADE_TARGET_VERSION} syntax."
+      fi
+  needs: []

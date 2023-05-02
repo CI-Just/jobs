@@ -1,0 +1,41 @@
+---
+# https://github.com/containers/buildah
+include:
+  - remote: https://jobs.just-ci.dev/v5.5.0-beta.1/container/image.yml
+
+variables:
+  BUILDAH_EXTRA_ARGS: "" # https://github.com/containers/buildah/blob/main/docs/buildah-build.1.md
+
+.buildah:
+  stage: build
+  extends: .container:rules
+  image: quay.io/buildah/stable:latest
+  script:
+    - echo "[*] Building and pushing '${IMAGE_CONTAINERFILE}' in context
+      '${IMAGE_CONTEXT}' to '${IMAGE_NAME}:${IMAGE_DEV_TAG}' and
+      '${IMAGE_NAME}:${IMAGE_TAG}'."
+    - if [ "${BUILDAH_EXTRA_ARGS}" != "" ]; then echo "[*] Applying the extra
+      arguments '${BUILDAH_EXTRA_ARGS}'."; fi
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$(echo -n
+      ${CI_REGISTRY_USER}:${CI_REGISTRY_PASSWORD} | base64)\"}}}" >
+      /tmp/auth.json
+    - buildah build --authfile /tmp/auth.json -f ${IMAGE_CONTAINERFILE}
+      --tag=${IMAGE_NAME}:${IMAGE_DEV_TAG} --tag=${IMAGE_NAME}:${IMAGE_TAG}
+      --layers=${IMAGE_CACHE} ${BUILDAH_EXTRA_ARGS}
+    - |
+      for IMAGE in "${IMAGE_NAME}:${IMAGE_TAG}" "${IMAGE_NAME}:${IMAGE_DEV_TAG}"; do
+        buildah push --authfile /tmp/auth.json ${IMAGE}
+      done
+
+# default for polyrepos
+buildah:
+  extends: .buildah
+
+# monorepos: user should extend this hidden job (one job for each container)
+.buildah:monorepo:
+  extends: .buildah
+  variables:
+    CONTEXT_PATH: changeme
+    IMAGE_NAME: ${CI_REGISTRY_IMAGE}/${CONTEXT_PATH}
+    IMAGE_CONTEXT: ${CI_PROJECT_DIR}/${CONTEXT_PATH}
+    IMAGE_CONTAINERFILE: ${CI_PROJECT_DIR}/${CONTEXT_PATH}/Dockerfile

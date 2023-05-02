@@ -1,0 +1,15 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/globalvats/project-automation/workflow.yml
+  - remote: https://jobs.just-ci.dev/globalvats/project-automation/find-next-release.yml
+  - remote: https://jobs.just-ci.dev/globalvats/project-automation/gitlab-recommended.yml
+  - remote: https://jobs.just-ci.dev/globalvats/project-automation/semantic-release.yml
+  - remote: https://jobs.just-ci.dev/globalvats/project-automation/generic.yaml
+  - remote: https://jobs.just-ci.dev/globalvats/python/tbump.yml
+
+tbump:
+  extends:
+    - .python:pre
+    - .release:rules
+  needs:
+    - find-next-release

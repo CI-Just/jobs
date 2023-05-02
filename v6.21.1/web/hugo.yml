@@ -1,0 +1,32 @@
+---
+# Publishes a hugo repo as GitLab pages.
+# The job name must be pages for it to work.
+
+# Add a before script to add an external theme, for example:
+# .pages:
+#   before_script:
+#     - git clone https://github.com/matcornic/hugo-theme-learn.git themes/hugo-theme-learn
+
+include:
+  - remote: https://jobs.just-ci.dev/v6.21.1/project-automation/telemetry.yml
+
+variables:
+  HUGO_DEFAULT_ARGS: --gc --minify
+
+.hugo:
+  extends: .telemetry
+  stage: deploy
+  image:
+    name: registry.gitlab.com/just-ci/images/hugo:latest
+    entrypoint: [""]
+  script:
+    - hugo version
+    - |
+      echo "Running Hugo with args: ${HUGO_DEFAULT_ARGS} ${HUGO_EXTRA_ARGS}"
+    - hugo --destination ${CI_PROJECT_DIR}/public ${HUGO_DEFAULT_ARGS}
+      ${HUGO_EXTRA_ARGS}
+    - gzip -kr ${CI_PROJECT_DIR}/public
+  artifacts:
+    paths:
+      - public
+    when: always

@@ -1,0 +1,74 @@
+---
+.gitlab:schedule-pipelines:
+  stage: deploy
+  image:
+    name: ghcr.io/tomwright/dasel:alpine
+    entrypoint: [""]
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - apk add -q curl
+    - |
+      echo "[*] Schedule info:"
+      echo "Project IDs: ${SCHEDULE_PIPELINE_PROJECT_IDS:=${CI_PROJECT_ID}}"
+      echo "Description: ${SCHEDULE_PIPELINE_DESCRIPTION:=Default}"
+      echo "Cron: ${SCHEDULE_PIPELINE_CRON:=0 1 * * *}" # Every day at 1:00 (AM)
+      echo "Timezone: ${TZ:=UTC}"
+      if [ "${SCHEDULE_PIPELINE_VARIABLE}" != "" ]; then
+        echo "Variable: ${SCHEDULE_PIPELINE_VARIABLE}"
+      fi
+
+    - |
+      GL_TOKEN_USER=$(curl -sSLf -H "PRIVATE-TOKEN: ${GL_TOKEN}" "${CI_API_V4_URL}/user")
+      GL_TOKEN_USER_ID=$(echo ${GL_TOKEN_USER} | dasel -p json '.id')
+      GL_TOKEN_NAME=$(echo ${GL_TOKEN_USER} | dasel -p json '.name')
+      GL_TOKEN_USERNAME=$(echo ${GL_TOKEN_USER} | dasel -p json '.username')
+    - |
+      for PROJECT_ID in ${SCHEDULE_PIPELINE_PROJECT_IDS}; do
+        PROJECT=$(curl -sSLf -H "PRIVATE-TOKEN: ${GL_TOKEN}" "${CI_API_V4_URL}/projects/${PROJECT_ID}")
+        PROJECT_NAME=$(echo ${PROJECT} | dasel -p json '.name_with_namespace')
+        DEFAULT_BRANCH=$(echo ${PROJECT} | dasel -p json '.default_branch')
+
+        SCHEDULE=$(curl -sSLf -H "PRIVATE-TOKEN: ${GL_TOKEN}" "${CI_API_V4_URL}/projects/${PROJECT_ID}/pipeline_schedules" | dasel -n -p json -m ".(?:description=${SCHEDULE_PIPELINE_DESCRIPTION})")
+
+        if [ "${SCHEDULE}" != "null" ]; then
+          echo "[-] ${PROJECT_NAME} (ID: ${PROJECT_ID}) already has a schedule called '${SCHEDULE_PIPELINE_DESCRIPTION}'. Skipping."
+        else
+          printf "[+] Adding schedule called '${SCHEDULE_PIPELINE_DESCRIPTION}' for project ${PROJECT_NAME} (ID: ${PROJECT_ID})..."
+          SCHEDULE=$(curl -sSLfX POST -H "PRIVATE-TOKEN: ${GL_TOKEN}" -F ref="${DEFAULT_BRANCH}" -F description="${SCHEDULE_PIPELINE_DESCRIPTION}" -F cron_timezone="${TZ}" -F cron="${SCHEDULE_PIPELINE_CRON}" "${CI_API_V4_URL}/projects/${PROJECT_ID}/pipeline_schedules")
+          echo " done."
+        fi
+        SCHEDULE_ID=$(echo ${SCHEDULE} | dasel -p json -w yaml '.id')
+        if [ "${SCHEDULE_PIPELINE_VARIABLE}" != "" ]; then
+          printf "[*] Adding variable ${SCHEDULE_PIPELINE_VARIABLE} to schedule..."
+          KEY=${SCHEDULE_PIPELINE_VARIABLE%=*}
+          VALUE=${SCHEDULE_PIPELINE_VARIABLE#*=}
+          if curl --fail-with-body -sSLX POST -H "PRIVATE-TOKEN: ${GL_TOKEN}" -F "key=${KEY}" -F "value=${VALUE}" "${CI_API_V4_URL}/projects/${PROJECT_ID}/pipeline_schedules/${SCHEDULE_ID}/variables" >/tmp/log 2>&1; then
+            echo " done."
+          else
+            echo " failed with the following error:"
+            cat /tmp/log
+            ERROR=1
+          fi
+        fi
+        if [ "${DISABLE_SCHEDULE_OWNERSHIP_WARNING}" = "" ]; then
+          if [ "$(echo $SCHEDULE | dasel -p json -w yaml '.owner.id')" = "${GL_TOKEN_USER_ID}" ]; then
+            echo "[!] The schedule is owned by the GL_TOKEN user named '${GL_TOKEN_NAME}' with username '${GL_TOKEN_USERNAME}', so you probably will not receive any warnings of pipeline failures."
+            echo "Go here and take ownership: $(echo ${PROJECT} | dasel -p json -w yaml '.web_url')/-/pipeline_schedules"
+            echo "Or disable this warning by setting a variable called DISABLE_SCHEDULE_OWNERSHIP_WARNING to 'true'."
+            ERROR=1
+          fi
+        fi
+      done
+    - |
+      if [ "${ERROR}" != "" ]; then
+        echo "[!] Something is wrong. See logs above."
+        exit 1
+      fi
+  allow_failure: true
+  needs: []
+  rules:
+    - if: $GL_TOKEN
+
+gitlab:schedule-pipelines:
+  extends: .gitlab:schedule-pipelines

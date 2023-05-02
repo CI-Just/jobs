@@ -1,0 +1,20 @@
+---
+# https://dwheeler.com/flawfinder/
+include:
+  - remote: https://jobs.just-ci.dev/v6.19.1/c/generic.yml
+
+variables:
+  FLAWFINDER_ERROR_LEVEL: "3"
+  FLAWFINDER_MIN_LEVEL: "1"
+  FLAWFINDER_DEFAULT_ARGS: --falsepositive --immediate --context
+  FLAWFINDER_EXTRA_ARGS: ""
+
+c:flawfinder:
+  extends: .c:pre
+  variables:
+    JOB_PACKAGE: flawfinder
+  script:
+    - !reference [".c:pre", script]
+    - flawfinder --version
+    - flawfinder ${FLAWFINDER_DEFAULT_ARGS} ${FLAWFINDER_EXTRA_ARGS} --minlevel
+      ${FLAWFINDER_MIN_LEVEL} --error-level=${FLAWFINDER_ERROR_LEVEL} .

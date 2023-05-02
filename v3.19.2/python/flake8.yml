@@ -1,0 +1,12 @@
+---
+python:flake8:
+  variables:
+    CHECK_PATH: "./${PYTHON_PACKAGE}"
+    DEFAULT_ARGS: "--max-line-length=88 --extend-ignore=E203 --max-complexity=10 --extend-exclude=tests/ --show-source --statistics"
+    EXTRA_ARGS: ""
+  stage: test
+  image: registry.gitlab.com/notno/python-tests
+  script:
+    - pip install .
+    - pip install flake8
+    - flake8 ${DEFAULT_ARGS} ${EXTRA_ARGS} ${CHECK_PATH} && echo "[+] No problems found. Well done!"

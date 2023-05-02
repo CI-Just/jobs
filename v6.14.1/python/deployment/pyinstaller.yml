@@ -1,0 +1,102 @@
+---
+# First create a .spec file locally using `pyi-makespec --onefile`, and commit it to your repo.
+# Point PYINSTALLER_TARGET to that file. Defaults to "main.spec".
+
+include:
+  - remote: https://jobs.just-ci.dev/v6.14.1/python/generic.yml
+
+variables:
+  PYINSTALLER_EXTRA_ARGS: ""
+  PYINSTALLER_TARGET: main.spec
+  PYINSTALLER_WINDOWS_PYVERSION: "" # Needs to be a Chocolatey installable version, i.e. 3.10.8
+  PYINSTALLER_WINDOWS_CHOCO_EXTRA_ARGS: ""
+
+.python:pyinstaller:
+  stage: build
+  extends: .python:pre
+  variables:
+    JOB_PACKAGE: pyinstaller
+  script:
+    - pip install -q --log=${CI_PROJECT_DIR}/pip-log.txt ${JOB_PACKAGE}
+    - pip install -q --log=${CI_PROJECT_DIR}/pip-log.txt ${PYTHON_CONTEXT}
+    - |
+      echo "[*] Job info:"
+      echo "Target: ${PYINSTALLER_TARGET}"
+      echo "Job extra args: ${PYINSTALLER_EXTRA_ARGS}"
+  artifacts:
+    paths:
+      - build
+      - dist
+      - pip-log.txt
+    when: always
+  # rules:  # Reenable when this one is released: https://gitlab.com/gitlab-org/gitlab/-/issues/283881
+  #   - exists:
+  #       - $PYINSTALLER_TARGET
+
+# This doesn't use a container image as shared runners use virtual machines
+python:pyinstaller:windows:
+  extends: .python:pyinstaller
+  script:
+    - |
+      If (${PYINSTALLER_WINDOWS_PYVERSION}) {
+        ${PYINSTALLER_WINDOWS_CHOCO_EXTRA_ARGS}+=" --version=${PYINSTALLER_WINDOWS_PYVERSION}"
+      }
+    - choco install -y python --no-progress
+      ${PYINSTALLER_WINDOWS_CHOCO_EXTRA_ARGS}.Split()
+    - $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine")
+      + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+    - wget
+      https://github.com/upx/upx/releases/download/v4.0.1/upx-4.0.1-win64.zip
+      -OutFile upx.zip
+    - Expand-Archive upx.zip C:\
+    - mv C:\upx* C:\upx
+    - If (-Not ${PYTHON_CONTEXT}) { ${PYTHON_CONTEXT}="." }
+    - pip install -q --log=${CI_PROJECT_DIR}/pip-log.txt wheel
+    - !reference [".python:pyinstaller", script]
+    - pyinstaller "${PYINSTALLER_TARGET}" ${PYINSTALLER_EXTRA_ARGS}.Split()
+      --upx-dir C:\upx
+    - |
+      if (-Not "${PWD}" -eq "${CI_PROJECT_DIR}") {
+        echo "[*] Moving output files to job root dir."
+        cp -r build ${CI_PROJECT_DIR}\
+        cp -r dist ${CI_PROJECT_DIR}\
+      }
+    - ${OUTPUT}=Resolve-Path -Relative dist\*.exe | % {$_ -replace "\\","/"} |
+      Out-String
+    - |
+      echo "Executable: ${CI_PROJECT_URL}/-/jobs/${CI_JOB_ID}/artifacts/raw/${OUTPUT}"
+  tags:
+    - shared-windows
+
+python:pyinstaller:linux:
+  extends: .python:pyinstaller
+  script:
+    - |
+      echo "[*] Installing binutils and upx using OS package manager..."
+      if command -v apk > /dev/null; then
+        apk add -q binutils upx
+      elif command -v apt-get > /dev/null;then
+        apt-get update -qq && apt-get install -qqy binutils upx
+      else
+        echo "[!] Can't install binutils and upx because neither apk nor apt-get is available. The job will probably fail."
+      fi
+    - PYTHON_CONTEXT=${PYTHON_CONTEXT:=.}
+    - !reference [".python:pyinstaller", script]
+    - pyinstaller "${PYINSTALLER_TARGET}" ${PYINSTALLER_EXTRA_ARGS}
+    - |
+      if [ "${PWD}" != "${CI_PROJECT_DIR}" ]; then
+        cp -r build dist ${CI_PROJECT_DIR}/
+      fi
+    - |
+      echo "Executable: ${CI_PROJECT_URL}/-/jobs/${CI_JOB_ID}/artifacts/raw/$(find dist -executable -type f)"
+
+# python:pyinstaller:check:  # Reenable when this one is released: https://gitlab.com/gitlab-org/gitlab/-/issues/283881
+#   extends: .python:pyinstaller
+#   script:
+#     - echo "[!] $PYINSTALLER_TARGET does not exist. Create it using 'pyi-makespec'."
+#     - exit 1
+#   artifacts: null
+#   rules:
+#     - exists:
+#         - $PYINSTALLER_TARGET
+#       when: never

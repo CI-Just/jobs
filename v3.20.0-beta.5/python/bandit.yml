@@ -1,0 +1,23 @@
+---
+# bandit performs static security analysis of python packages
+# https://bandit.readthedocs.io/en/latest/
+python:bandit:
+  image: registry.gitlab.com/notno/python-tests
+  stage: test
+  variables:
+    CHECK_PATH: "./${PYTHON_PACKAGE}"
+    SKIP_PATHS: "*/tests/*"
+    # use a comma separated list to add more. example:
+    # SKIP_PATHS: "tests/*,src/tests.py"
+    SKIP_CHECK: ""  # Comma separated, i.e.: B101,B703
+    EXTRA_ARGS: ""
+  script:
+    - pip install bandit
+    - if [ ! -z "${SKIP_PATHS}" ]; then
+        EXTRA_ARGS="${EXTRA_ARGS} --exclude ${SKIP_PATHS} ";
+      fi
+    - if [ ! -z "${SKIP_CHECK}" ]; then
+        EXTRA_ARGS="${EXTRA_ARGS} --skip ${SKIP_CHECK} ";
+      fi
+    - bandit -r ${EXTRA_ARGS} ${CHECK_PATH}
+  needs: []

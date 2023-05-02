@@ -1,0 +1,4 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/rhtenhove-main-patch-79412/python/bandit.yml
+  - remote: https://jobs.just-ci.dev/rhtenhove-main-patch-79412/python/safety.yml

@@ -1,0 +1,62 @@
+---
+# Here we check your GitLab project settings and provide recommendations on which
+# settings you should change, or how to decide what to choose.
+# You need to have a variable called GL_TOKEN set, which contains a Project
+# Access Token with read_api or api access.
+
+# If you want problems to be automatically resolved, set the variable GITLAB_RECOMMENDED_AUTO_FIX to "true"
+include:
+  - remote: https://jobs.just-ci.dev/main/project-automation/generic.yaml
+
+gitlab:recommended:
+  stage: test
+  image:
+    name: docker.io/alpine:latest
+    entrypoint: [""]
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - apk add curl "dasel<2"
+    - wget https://gitlab.com/just-ci/utils/-/raw/main/gitlab/best-practices.yml
+      -qO .settings.yml
+    - FILE=project_${CI_PROJECT_ID}_details
+    - |
+      curl -sSLf -H "PRIVATE-TOKEN: ${GL_TOKEN}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}" -o ${FILE}.json
+    - dasel -f ${FILE}.json -r json -w yaml > ${FILE}.yml
+    - let COUNT=0 || true
+    - |
+      for KEY in $(dasel -f .settings.yml -m '.-'); do
+        printf "[*] Checking ${KEY}..."
+        CURRENT=$(dasel -f ${FILE}.yml ${KEY})
+        RECOMMENDED=$(dasel -f .settings.yml "${KEY}".recommended)
+        HINT=$(dasel -f .settings.yml ${KEY}.hint)
+        if [ "${CURRENT}" != "${RECOMMENDED}" ]; then
+          echo -e " \e[31mrecommended value not set\e[0m. Current value is: ${CURRENT}. Expected value is: ${RECOMMENDED}."
+          echo "${HINT}"
+          if [ "${GITLAB_RECOMMENDED_AUTO_FIX}" = "true" ]; then
+            printf "[*] Automatically fixing the problem..."
+            curl -sSLf -H "PRIVATE-TOKEN: ${GL_TOKEN}" -X PUT "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}" -d "${KEY}=${RECOMMENDED}" > /dev/null
+            echo -e " \e[32mdone\e[0m."
+          else
+            let COUNT++ || true
+          fi
+        else
+          echo -e " \e[32mrecommended value set\e[0m: ${RECOMMENDED}."
+        fi
+      done
+    - |
+      if test ${COUNT} -gt 0; then
+        echo "[!] There are $COUNT settings to check. See above. To resolve these automatically, add the following variable to your .gitlab-ci.yml:"
+        echo -e 'variables:\n  GITLAB_RECOMMENDED_AUTO_FIX: "true"'
+        exit 1
+      else
+        echo "[+] All good!"
+      fi
+  rules:
+    - if: $GL_TOKEN
+  needs: []
+
+gitlab:recommended:GL_TOKEN:
+  extends: .fix:GL_TOKEN
+  variables:
+    JOB_NAME: gitlab:recommended

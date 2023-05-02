@@ -1,0 +1,6 @@
+---
+python:poetry:check:
+  image: registry.gitlab.com/notno/python-tests
+  stage: .pre
+  script:
+    - poetry check && echo "[+] No errors found in your pyproject.toml." || echo "[!] Resolve the aforementioned errors in your pyproject.toml so we can continue testing."

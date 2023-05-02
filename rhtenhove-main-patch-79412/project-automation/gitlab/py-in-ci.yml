@@ -1,0 +1,39 @@
+---
+gitlab:py-in-ci-check:
+  stage: test
+  image:
+    name: docker.io/alpine/git:latest
+    entrypoint: [""]
+  script:
+    - apk add -q yq
+    - |
+      for FILE in $(find ${CI_PROJECT_DIR} -type f ! -path "*/tests/*" -name "*.py"); do
+        NAME_ONLY="${FILE%.*}"
+        echo "[*] Checking ${NAME_ONLY}..."
+        JOB_FILE="${NAME_ONLY}.yml"
+
+        if ! test -f "${JOB_FILE}"; then
+          echo "[!] ${JOB_FILE} does not exist."
+          ERROR=1
+          continue
+        fi
+
+        echo 'python - << EOF' > /tmp/script.yaml
+        cat "${FILE}" >> /tmp/script.yaml
+        echo 'EOF' >> /tmp/script.yaml
+
+        SCRIPT="$(cat /tmp/script.yaml)" yq -i '(..|select(has("script")).["script"].[0]) |= strenv(SCRIPT)' "${JOB_FILE}"
+        if ! git --no-pager -c color.diff=always diff --exit-code "${JOB_FILE}"; then
+          echo "[!] ${JOB_FILE} does not match script."
+          ERROR=1
+        else
+          echo "Looks good!"
+        fi
+      done
+    - |
+      if [ "${ERROR}" != "" ]; then
+        echo "[!] One or more jobs don't match their script, see above."
+        echo "To fix, run: project-automation/gitlab/py-in-ci.sh"
+        exit 1
+      fi
+  needs: []

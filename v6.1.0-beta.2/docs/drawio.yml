@@ -1,0 +1,27 @@
+---
+# You can access the resulting images by adding the
+# following to a README.md:
+# ![description](/../-/jobs/artifacts/master/raw/filename.png?job=docs%3Adrawio)
+# Replace filename with the name of the .drawio file, and the extension
+# if you changed the FORMAT variable.
+# The ref (currently master) is hardcoded, so the README.md render will only
+# show what is built on that ref.
+
+# You can have multiple files (even in subdirectories), and the README.md
+# can be in any directory. Just make sure the path is correct. For example:
+# `dir/subdir/dia.drawio is shown using ![description](/../-/jobs/artifacts/master/raw/dir/subdir/dia.png?job=docs%3Adrawio)
+
+docs:drawio:
+  image:
+    name: rlespinasse/drawio-export
+    entrypoint: [""]
+  stage: build
+  variables:
+    EXTRA_ARGS: ""
+    FORMAT: "png"
+  script:
+    - /opt/drawio-desktop/entrypoint.sh --remove-page-suffix --output . --format
+      ${FORMAT} ${EXTRA_ARGS}
+  artifacts:
+    paths:
+      - "**/*.$FORMAT"

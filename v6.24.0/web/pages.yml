@@ -1,0 +1,25 @@
+---
+# Set variable CI_PAGES_URL to the domain you wish to serve your site. This defaults to
+# https://<root-namespace>.gitlab.io/<project-path>.
+
+include:
+  - remote: https://jobs.just-ci.dev/v6.24.0/web/hugo.yml
+
+pages:
+  extends: .hugo
+  variables:
+    HUGO_BASEURL: ${CI_PAGES_URL}
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+
+pages:dev:
+  extends: .hugo
+  variables:
+    ENVIRONMENT: staging
+    HUGO_EXTRA_ARGS: --environment ${ENVIRONMENT}
+    HUGO_BASEURL: ${CI_PAGES_URL}/-/jobs/${CI_JOB_ID}/artifacts/public
+  environment:
+    name: ${ENVIRONMENT}
+    url: ${HUGO_BASEURL}/index.html
+  rules:
+    - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH

@@ -1,0 +1,50 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/v6.14.2/project-automation/badge.yml
+
+.badge:md-presentation:
+  extends: .badge
+  before_script:
+    - LABEL=$(date +'%Y-%m-%d')
+  needs:
+    - docs:md-presentation
+
+badge:pdf:
+  extends: .badge:md-presentation
+  variables:
+    VALUE: pdf
+    URL: "${PDF}"
+    BADGE_NAME: pdf
+    COLOR: "#f40f02" # Candy Apple Red
+
+badge:pptx:
+  extends: .badge:md-presentation
+  variables:
+    VALUE: pptx
+    URL: "${PPTX}"
+    BADGE_NAME: pptx
+    COLOR: "#d04423" # Plochere's Vermilion
+
+badge:html:
+  extends: .badge:md-presentation
+  variables:
+    VALUE: html
+    URL: "${HTML}"
+    BADGE_NAME: html
+    COLOR: "#6495ED" # Cornflower blue
+
+badge:html-zip:
+  extends: .badge:md-presentation
+  variables:
+    VALUE: html.zip
+    URL: "${HTML_ZIP}"
+    BADGE_NAME: html-zip
+    COLOR: "#f2bb05" # American Yellow
+
+badge:images:
+  extends: .badge:md-presentation
+  variables:
+    VALUE: images.zip
+    URL: "${IMAGES}"
+    BADGE_NAME: images
+    COLOR: "#f2bb05" # American Yellow

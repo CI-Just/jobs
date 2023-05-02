@@ -1,0 +1,18 @@
+---
+variables:
+  LATEX_DIR: ${CI_PROJECT_DIR}
+  LATEX_FILENAME: "" # Optional. If not provided, all tex files in LATEX_DIR are compiled.
+  LATEX_ARGS: "-pdf -interaction=nonstopmode" # Arguments provided to latexmk.
+  LATEX_EXTRA_ARGS: ""
+
+docs:latex:
+  stage: build
+  image: texlive/texlive
+  script:
+    - cd ${LATEX_DIR}
+    - latexmk ${LATEX_ARGS} ${LATEX_EXTRA_ARGS} ${LATEX_FILENAME}
+  artifacts:
+    paths:
+      - ${LATEX_DIR}/${LATEX_FILENAME:-*}.bbl
+      - ${LATEX_DIR}/${LATEX_FILENAME:-*}.log
+      - ${LATEX_DIR}/${LATEX_FILENAME:-*}.pdf

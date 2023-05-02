@@ -1,0 +1,19 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/main/python/generic.yml
+
+variables:
+  FLAKE8_DEFAULT_ARGS:
+    --max-line-length=88 --extend-ignore=E203 --max-complexity=10
+    --extend-exclude="${PYTHON_EXCLUDE_PATHS}" --show-source --statistics
+  FLAKE8_EXTRA_ARGS: ""
+
+python:flake8:
+  extends: .python:pre-install
+  variables:
+    JOB_PACKAGE: flake8
+  script:
+    - !reference [".python:pre", script]
+    - !reference [".python:pre-install", script]
+    - flake8 --version
+    - flake8 ${FLAKE8_DEFAULT_ARGS} ${FLAKE8_EXTRA_ARGS} .

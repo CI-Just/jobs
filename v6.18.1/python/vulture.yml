@@ -1,0 +1,18 @@
+---
+# https://github.com/jendrikseipp/vulture
+include:
+  - remote: https://jobs.just-ci.dev/v6.18.1/python/generic.yml
+
+variables:
+  VULTURE_MIN_CONFIDENCE: 100
+
+python:vulture:
+  extends: .python:pre-install
+  variables:
+    JOB_PACKAGE: vulture
+  script:
+    - !reference [".python:pre", script]
+    - !reference [".python:pre-install", script]
+    - vulture --version
+    - vulture --min-confidence ${VULTURE_MIN_CONFIDENCE} . --exclude
+      "${PYTHON_EXCLUDE_PATHS}"

@@ -1,0 +1,28 @@
+---
+# https://pypi.org/project/tbump/
+include:
+  - remote: https://jobs.just-ci.dev/v6.14.3/python/generic.yml
+
+variables:
+  TBUMP_DEFAULT_ARGS: --only-patch --non-interactive
+
+tbump:
+  extends: .python:pre
+  stage: build
+  script:
+    - |
+      if [ ! "${TBUMP_NEXT_VERSION}" = "" ]; then
+        pip3 install tbump
+        tbump ${TBUMP_NEXT_VERSION} ${TBUMP_DEFAULT_ARGS}
+        echo "BUMPED_FILES=$(git diff --name-only | tr '\n' ' ')" | tee ${CI_PROJECT_DIR}/bumped_files.env
+      else
+        echo "[-] No new version released."
+      fi
+    - rm -rf .git
+  artifacts:
+    paths:
+      - ./*
+    exclude:
+      - bumped_files.env
+    reports:
+      dotenv: bumped_files.env

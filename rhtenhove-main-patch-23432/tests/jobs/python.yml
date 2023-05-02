@@ -1,0 +1,31 @@
+---
+include:
+  - local: python/collections/all.yml
+  - local: python/deployment/pyinstaller.yml
+  - local: project-automation/workflow.yml
+
+variables:
+  PYTHON_CONTEXT: tests/mockup_projects/python/pep518
+  PYINSTALLER_TARGET: tests/mockup_projects/python/pep518/mymodule.spec
+
+python:build:setuptools:
+  extends: python:build
+  variables:
+    PYTHON_CONTEXT: tests/mockup_projects/python/setuptools
+
+python:twine:
+  rules:
+    - when: never
+
+python:pylint:
+  variables:
+    PYLINT_EXTRA_OUTPUT_FORMATS: text:/tmp/pylint.txt
+
+# This one takes about 5 minutes each time, so only test it when we change the job or its dependencies
+python:pyinstaller:windows:
+  rules:
+    - changes:
+        - python/deployment/pyinstaller.yml
+        - python/generic.yml
+      # exists:  # Reenable when this one is released: https://gitlab.com/gitlab-org/gitlab/-/issues/283881
+      #   - $PYINSTALLER_TARGET

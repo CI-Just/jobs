@@ -1,0 +1,24 @@
+---
+variables:
+  HELM_DIR: ./
+  HELM_RELEASE_CHANNEL: stable
+  HELM_REPO_NAME: your-repo
+  HELM_REPO_USERNAME: ${CI_REGISTRY_USER}
+  HELM_REPO_PASSWORD: ${CI_REGISTRY_PASSWORD}
+  HELM_REPO_URL: ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/helm/${HELM_RELEASE_CHANNEL}
+  HELM_K8s_TAG: 1.21.5
+
+helm:release:
+  image: alpine/k8s:${HELM_K8s_TAG}
+  stage: build
+  script:
+    - helm package ${HELM_DIR}
+    - helm repo index ${HELM_DIR}
+    - echo ${HELM_REPO_URL}
+    - helm repo add --username ${HELM_REPO_USERNAME} --password ${HELM_REPO_PASSWORD} ${HELM_REPO_NAME} ${HELM_REPO_URL}
+    - helm cm-push *-${CI_COMMIT_TAG}.tgz ${HELM_REPO_NAME}
+  rules:
+    - if: $CI_COMMIT_TAG
+  artifacts:
+    paths:
+      - ${HELM_DIR}/index.yaml

@@ -1,0 +1,43 @@
+---
+# https://python-semantic-release.readthedocs.io/en/latest/
+
+###### IMPORTANT ######
+# you will need an access token with api permission stored as GL_TOKEN env variable in your project/group
+###### IMPORTANT ######
+
+# We allow failure of the semantic-release line because it will always fail due to
+# a broken implementation of hvcs changelog posting. We check afterwards if it failed
+# due to that bug or due to something else.
+# Twine script line will not be needed anymore soon: https://github.com/relekang/python-semantic-release/pull/303
+
+include:
+  - remote: https://jobs.just-ci.dev/v3.7.1/'python/semantic-release/template.yml'
+
+python:semantic-release:private:
+  extends: .python:semantic-release:template
+  variables:
+    BUILD_COMMAND: "poetry build"
+    EXTRA_ARGS: ""
+    TWINE_USERNAME: ${CI_REGISTRY_USER}
+    TWINE_PASSWORD: ${CI_JOB_TOKEN}
+    GIT_STRATEGY: clone
+  script:
+    - semantic-release publish $EXTRA_ARGS -D hvcs=gitlab -D build_command="$BUILD_COMMAND" -D remove_dist= -D upload_to_pypi= 2> error.log || true
+    - |
+      if grep -q "The page you're looking for could not be found" error.log; then
+        echo "[*] Skipping broken changelog publish. This is not a problem."
+      elif [ -s error.log ]; then
+        cat error.log
+        if ! grep -q "No release will be made." error.log; then
+          echo "[!] Error occured, see logs above. Add --verbosity=DEBUG to EXTRA_ARGS to debug."
+          exit 1
+        fi
+      fi
+    - |
+      if test -d dist; then
+        twine upload --repository-url ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi dist/*
+      else
+        echo "[-] No new release to publish."
+      fi
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH

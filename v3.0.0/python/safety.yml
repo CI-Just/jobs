@@ -1,0 +1,9 @@
+# safety checks your installed python dependencies for known security vulnerabilities
+# https://pypi.org/project/safety/
+
+python:safety:
+  stage: test
+  image: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME-testing
+  script:
+    - pip show safety
+    - safety check

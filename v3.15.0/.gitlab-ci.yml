@@ -1,0 +1,153 @@
+---
+include:
+  - local: "other/gitlab/project-settings.yml"
+
+  - local: "other/badge.yml"
+
+  - local: "docs/drawio.yml"
+
+  - local: "docker/anchore/grype.yml"
+
+  - local: "pipelines/poetry/docker-pro.yml"
+
+  - local: "python/flake8.yml"
+  - local: "python/pylic.yml"
+  - local: "python/vulture.yml"
+  - local: "python/poetry/pip-licenses.yml"
+
+  - local: "c/cppcheck.yml"
+  - local: "c/flawfinder.yml"
+
+  - local: "yaml/yamllint.yml"
+
+docker:kaniko:
+  variables:
+    CONTEXT: templates_tests/python
+
+# We only check if it runs properly, not if our image has problems
+docker:anchore:grype:
+  variables:
+    GRYPE_FAIL_ON: ""
+
+python:poetry:check:
+  before_script:
+    - cd templates_tests/python
+
+python:black:
+  before_script:
+    - cd templates_tests/python
+
+python:bandit:
+  before_script:
+    - cd templates_tests/python
+
+python:isort:
+  before_script:
+    - cd templates_tests/python
+
+python:mypy:
+  before_script:
+    - cd templates_tests/python
+
+python:pylint:
+  before_script:
+    - cd templates_tests/python
+
+python:pytest:
+  before_script:
+    - cd templates_tests/python
+
+python:safety:
+  before_script:
+    - cd templates_tests/python
+
+python:flake8:
+  before_script:
+    - cd templates_tests/python
+
+python:pylic:
+  before_script:
+    - cd templates_tests/python
+
+python:vulture:
+  before_script:
+    - cd templates_tests/python
+
+python:build:
+  before_script:
+    - cd templates_tests/python
+
+python:twine:
+  before_script:
+    - cd templates_tests/python
+
+python:poetry:pip-licenses:
+  before_script:
+    - cd templates_tests/python
+    - pip install .
+  variables:
+    ALLOWED: MIT License
+
+docker:kaniko:python-old:
+  extends: docker:kaniko
+  variables:
+    CONTEXT: templates_tests/python36
+
+python:black-old:
+  extends: python:black
+  before_script:
+    - cd templates_tests/python36
+  needs: ["docker:kaniko:python-old"]
+
+python:poetry:pylint-old:
+  extends: python:pylint
+  before_script:
+    - cd templates_tests/python36
+  needs: ["docker:kaniko:python-old"]
+
+c:cppcheck:
+  variables:
+    ERROR_EXIT_CODE: 0
+    CHECK_PATH: templates_tests/c
+
+c:flawfinder:
+  variables:
+    ERROR_LEVEL: "6"
+    CHECK_PATH: templates_tests/c
+
+gitlab:project-settings:
+  variables:
+    AUTO_FIX: "true"
+
+# We keep this downstream, as we don't expect many MRs for this specific test
+downstream:pages:
+  stage: test
+  trigger:
+    project: ci/tests/pages
+    strategy: depend
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - changes:
+        - other/pages-hugo.yml
+
+# We keep this downstream, as we don't expect many MRs for this specific test
+downstream:pandoc:
+  stage: test
+  trigger:
+    project: template/report
+    strategy: depend
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - changes:
+        - docs/report-pandoc.yml
+
+semantic-release:dry-run:
+  extends: semantic-release
+  variables:
+    EXTRA_ARGS: "--dry-run --branches ${CI_COMMIT_BRANCH}"
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH

@@ -1,0 +1,6 @@
+---
+include:
+  - remote: "https://jobs.just-ci.dev/v4.0.0-beta.20/python/build.yml"
+  - remote: "https://jobs.just-ci.dev/v4.0.0-beta.20/python/twine.yml"
+  - remote: "https://jobs.just-ci.dev/v4.0.0-beta.20/python/pylic.yml"
+  - remote: "https://jobs.just-ci.dev/v4.0.0-beta.20/python/package-discovery.yml"

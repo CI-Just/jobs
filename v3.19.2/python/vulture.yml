@@ -1,0 +1,15 @@
+---
+# See https://github.com/jendrikseipp/vulture for details
+
+python:vulture:
+  stage: test
+  variables:
+    MIN_CONFIDENCE: 100
+    CHECK_PATH: "./${PYTHON_PACKAGE}"
+    DEFAULT_ARGS: "--ignore-names test_* --exclude tests/"
+  image: registry.gitlab.com/notno/python-tests
+  script:
+    - pip install .
+    - pip install vulture
+    - python -m vulture --min-confidence ${MIN_CONFIDENCE} ${CHECK_PATH}
+  needs: []

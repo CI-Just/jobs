@@ -1,0 +1,19 @@
+---
+# This job has little use without publishing the result, it's just a template.
+# Use one of the pipelines to make it useful with for example GitLab Pages.
+
+variables:
+  HUGO_DEFAULT_ARGS: --gc --minify
+
+.hugo:
+  stage: deploy
+  image:
+    name: registry.gitlab.com/just-ci/images/hugo:latest
+    entrypoint: [""]
+  script:
+    - hugo version
+    - |
+      echo "Running Hugo with args: ${HUGO_DEFAULT_ARGS} ${HUGO_EXTRA_ARGS}"
+    - hugo --destination ${CI_PROJECT_DIR}/public ${HUGO_DEFAULT_ARGS}
+      ${HUGO_EXTRA_ARGS}
+    - gzip -kr ${CI_PROJECT_DIR}/public

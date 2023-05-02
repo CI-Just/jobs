@@ -1,0 +1,4 @@
+---
+include:
+  - remote: "https://jobs.just-ci.dev/v3.19.2/pipelines/python-docker-pro.yml"
+  - remote: "https://jobs.just-ci.dev/v3.19.2/pipelines/poetry/base.yml"

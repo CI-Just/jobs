@@ -1,0 +1,5 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/66-bug-python-3-11-breaks-python-pip-licenses/pipelines/project-automation.yml
+  - remote: https://jobs.just-ci.dev/66-bug-python-3-11-breaks-python-pip-licenses/pipelines/python.yml
+  - remote: https://jobs.just-ci.dev/66-bug-python-3-11-breaks-python-pip-licenses/pipelines/container.yml

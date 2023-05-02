@@ -1,0 +1,62 @@
+---
+variables:
+  K8S_CONFIG_DIR: ${CI_JOB_NAME}
+
+.kube:
+  image: registry.gitlab.com/gitlab-org/cluster-integration/cluster-applications:latest
+  environment:
+    name: production
+    action: prepare
+
+.kube-context:
+  extends: .kube
+  stage: deploy
+  script:
+    - gl-use-kube-context
+    - chmod 400 ${KUBECONFIG}
+
+kubectl:envsubst:
+  extends: .kube
+  stage: build
+  script:
+    - apk add gettext
+    - |
+      for FILE in $(ls ${K8S_CONFIG_DIR}/envsubst/); do
+        if [ "${FILE}" = "values.yaml" ]; then
+          envsubst < ${K8S_CONFIG_DIR}/envsubst/${FILE} > ${K8S_CONFIG_DIR}/values.yaml
+        else
+          mkdir -p ${K8S_CONFIG_DIR}/apply
+          envsubst < ${K8S_CONFIG_DIR}/envsubst/${FILE} > ${K8S_CONFIG_DIR}/apply/${FILE}
+        fi
+      done
+  artifacts:
+    paths:
+      - ${K8S_CONFIG_DIR}/
+  rules:
+    - exists:
+        - ${K8S_CONFIG_DIR}/envsubst
+
+kubectl:apply:
+  extends: .kube-context
+  script:
+    - !reference [.kube-context, script]
+    - |
+      if test -f ${K8S_CONFIG_DIR}/apply/namespace.yaml; then
+        echo "[*] Ensuring namespace availability..."
+        kubectl apply --wait -f ${K8S_CONFIG_DIR}/apply/namespace.yaml
+      fi
+    - |
+      if test -d ${K8S_CONFIG_DIR}/apply; then
+        echo "[*] Running apply folder..."
+        kubectl apply --wait --recursive -f ${K8S_CONFIG_DIR}/apply
+      fi
+    - |
+      if test -d ${K8S_CONFIG_DIR}/create; then
+        echo "[*] Running create folder..."
+        kubectl create --recursive -f ${K8S_CONFIG_DIR}/create
+      fi
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      exists:
+        - ${K8S_CONFIG_DIR}/apply
+        - ${K8S_CONFIG_DIR}/create

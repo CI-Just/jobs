@@ -1,0 +1,10 @@
+---
+python:poetry:publish:
+  image: registry.gitlab.com/notno/poetry
+  stage: .post
+  script:
+    - poetry build
+    - poetry config repositories.repo \
+        "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi"
+    - poetry config http-basic.repo gitlab-ci-token ${CI_JOB_TOKEN}
+    - poetry publish -r repo

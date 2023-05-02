@@ -1,0 +1,34 @@
+---
+.kube-context:
+  image: registry.gitlab.com/gitlab-org/cluster-integration/cluster-applications:latest
+  before_script:
+    - gl-use-kube-context
+    - chmod 400 $KUBECONFIG  # Removes security warnings. https://gitlab.com/gitlab-org/project-templates/cluster-management/-/merge_requests/51#note_936576634
+
+variables:
+  KUBE_HUNTER_VERSION: main  # Or use for example v0.6.7 from the available tags on https://github.com/aquasecurity/kube-hunter/tags
+  KUBE_HUNTER_MANIFEST: kube-hunter/job.yaml
+  KUBE_HUNTER_MANIFEST_JSON: kube-hunter/job-json.yaml
+
+k8s:kube-hunter:
+  stage: .post
+  extends: .kube-context
+  script:
+    - |
+      if ! test -f ${KUBE_HUNTER_MANIFEST}; then
+        mkdir -p kube-hunter
+        wget -O ${KUBE_HUNTER_MANIFEST} https://raw.githubusercontent.com/aquasecurity/kube-hunter/${KUBE_HUNTER_VERSION}/job.yaml
+      fi
+    - apk add --no-cache yq
+    - yq eval '.spec.template.spec.containers[0].args += ["--report", "json"]' ${KUBE_HUNTER_MANIFEST} > ${KUBE_HUNTER_MANIFEST_JSON}
+    - yq eval -i '.metadata.name = "kube-hunter-json"' ${KUBE_HUNTER_MANIFEST_JSON}
+    - kubectl delete -f ${KUBE_HUNTER_MANIFEST_JSON} -f ${KUBE_HUNTER_MANIFEST} --ignore-not-found=true
+    - kubectl apply -f ${KUBE_HUNTER_MANIFEST_JSON} -f ${KUBE_HUNTER_MANIFEST}
+    - kubectl wait -f ${KUBE_HUNTER_MANIFEST_JSON} -f ${KUBE_HUNTER_MANIFEST} --for=condition=complete=true --timeout=5m
+    - kubectl logs -f jobs/kube-hunter-json > kube-hunter/kube-hunter-json.json
+    - kubectl logs -f jobs/kube-hunter
+  after_script:
+    - if [ -z ${KUBE_HUNTER_KEEP_JOB} ]; then kubectl delete -f ${KUBE_HUNTER_MANIFEST} -f ${KUBE_HUNTER_MANIFEST_JSON}; fi
+  artifacts:
+    paths:
+      - kube-hunter/

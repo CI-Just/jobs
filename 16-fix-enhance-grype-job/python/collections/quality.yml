@@ -1,0 +1,5 @@
+---
+include:
+  - remote: "https://jobs.just-ci.dev/16-fix-enhance-grype-job/python/mypy.yml"
+  - remote: "https://jobs.just-ci.dev/16-fix-enhance-grype-job/python/pylint.yml"
+  - remote: "https://jobs.just-ci.dev/16-fix-enhance-grype-job/python/pytest.yml"

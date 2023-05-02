@@ -1,0 +1,28 @@
+---
+include:
+  - remote: https://jobs.just-ci.dev/v6.19.2/c/generic.yml
+
+variables:
+  CPPCHECK_DEFAULT_ARGS: --report-progress --verbose
+  CPPCHECK_EXTRA_ARGS: ""
+  CPPCHECK_ENABLE: all
+  CPPCHECK_EXIT_CODE: 1
+
+c:cppcheck:
+  extends: .c:pre
+  variables:
+    JOB_PACKAGE: cppcheck-junit
+  script:
+    - !reference [".c:pre", script]
+    - cppcheck --version
+    - cppcheck --xml-version=2 ${CPPCHECK_DEFAULT_ARGS} ${CPPCHECK_EXTRA_ARGS}
+      --enable=${CPPCHECK_ENABLE} --error-exitcode=${CPPCHECK_EXIT_CODE} . 2>
+      ${CI_PROJECT_DIR}/cppcheck-result.xml
+  after_script:
+    - cppcheck_junit ${CI_PROJECT_DIR}/cppcheck-result.xml
+      ${CI_PROJECT_DIR}/cppcheck-junit.xml
+  needs: []
+  artifacts:
+    reports:
+      junit: cppcheck-junit.xml
+    when: always

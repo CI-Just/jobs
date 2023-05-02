@@ -1,0 +1,31 @@
+---
+include:
+  - local: pipelines/container.yml
+
+variables:
+  GRYPE_FAIL_ON_THRESHOLD: ""
+
+image:build:
+  variables:
+    IMAGE_CONTEXT: ${CI_PROJECT_DIR}/tests/mockup_projects/container/monorepo/image_A # Absolute path
+    IMAGE_NAME: ${CI_REGISTRY_IMAGE}/image_a
+
+kaniko:image_B:
+  extends: .image:build
+  variables:
+    IMAGE_CONTEXT: tests/mockup_projects/container/monorepo/image_B/ # Relative path with a slash
+    IMAGE_NAME: ${CI_REGISTRY_IMAGE}/its_here/image_b
+
+grype:
+  variables:
+    IMAGE_CONTEXT: tests/mockup_projects/container/monorepo/image_A # Relative path
+    IMAGE_NAME: ${CI_REGISTRY_IMAGE}/image_a
+  allow_failure: false
+
+grype:image_B:
+  extends: .grype
+  variables:
+    IMAGE_CONTEXT: ${CI_PROJECT_DIR}/tests/mockup_projects/container/monorepo/image_B # Absolute path
+    IMAGE_NAME: ${CI_REGISTRY_IMAGE}/its_here/image_b
+  needs: [kaniko:image_B]
+  allow_failure: false

@@ -1,0 +1,12 @@
+---
+# safety checks your installed python dependencies for known
+# security vulnerabilities
+# https://pypi.org/project/safety/
+
+python:safety:
+  stage: test
+  image: python:slim
+  script:
+    - pip install .
+    - pip install safety
+    - safety check

@@ -1,0 +1,181 @@
+---
+# CI of ci/templates itself
+
+variables:
+  SCHEDULE_PIPELINE_PROJECT_IDS:
+    30771297 30771293 30771284 30771254 30771239 30933363
+  SCHEDULE_PIPELINE_DESCRIPTION: CI Daily Update
+  SCHEDULE_PIPELINE_CRON: 0 10 * * * # Every day at 10:00
+  GITLAB_RECOMMENDED_AUTO_FIX: "true"
+  RELEASE_CHANGELOG: "false"
+
+include:
+  - local: pipelines/project-automation.yml
+  - local: yaml/yamllint.yml
+  - local: project-automation/pipeline-scheduler.yml
+  - local: project-automation/pages-hugo.yml
+  - local: project-automation/gitlab/py-in-ci.yml
+  - local: docs/prettier.yml
+
+.pages:
+  variables:
+    HUGO_BASEURL: ${CI_PAGES_URL}
+    HUGO_DEFAULT_ARGS: "" # minify causes problems with our README
+  before_script:
+    - cd tests/mockup_projects/pages
+    - git clone https://github.com/alexandrevicenzi/soho.git themes/soho
+    - mkdir content
+    - cp ${CI_PROJECT_DIR}/README.md content/_index.md
+  needs: []
+
+pages:
+  stage: test
+
+# child pipeline to unit tests all our jobs
+
+jobs:c:
+  stage: test
+  trigger:
+    include:
+      - local: tests/jobs/c.yml
+    strategy: depend
+  rules:
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      changes:
+        - c/**/*
+
+jobs:kaniko:
+  stage: test
+  trigger:
+    include:
+      - local: tests/jobs/kaniko.yml
+    strategy: depend
+  rules:
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      changes:
+        - container/**/*
+
+jobs:buildah:
+  stage: test
+  trigger:
+    include:
+      - local: tests/jobs/buildah.yml
+    strategy: depend
+  rules:
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      changes:
+        - container/**/*
+
+jobs:docker-arm64:
+  stage: test
+  trigger:
+    include:
+      - local: tests/jobs/docker-arm64.yml
+    strategy: depend
+  rules:
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      changes:
+        - container/**/*
+
+jobs:docs:
+  stage: test
+  trigger:
+    include:
+      - local: tests/jobs/docs.yml
+    strategy: depend
+  rules:
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      changes:
+        - docs/**/*
+
+jobs:python:
+  stage: test
+  trigger:
+    include:
+      - local: tests/jobs/python.yml
+    strategy: depend
+  rules:
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      changes:
+        - python/**/*
+
+jobs:python:old:
+  stage: test
+  variables:
+    PYVERSION: 3.7-slim
+  trigger:
+    include:
+      - local: tests/jobs/python.yml
+    strategy: depend
+  rules:
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      changes:
+        - python/**/*
+
+jobs:python:custom-image:
+  stage: test
+  trigger:
+    include:
+      - local: tests/jobs/python-custom-image.yml
+    strategy: depend
+  rules:
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      changes:
+        - python/**/*
+
+# child pipelines to test our off-the-shelf pipelines
+pipelines:c:
+  stage: test
+  trigger:
+    include:
+      - local: tests/pipelines/c.yml
+    strategy: depend
+  rules:
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      changes:
+        - c/**/*
+
+pipelines:python:
+  stage: test
+  trigger:
+    include:
+      - local: tests/pipelines/python.yml
+    strategy: depend
+  rules:
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      changes:
+        - python/**/*
+
+pipelines:container:polyrepo:
+  stage: test
+  trigger:
+    include:
+      - local: tests/pipelines/container/polyrepo.yml
+    strategy: depend
+  rules:
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      changes:
+        - container/**/*
+
+pipelines:container:monorepo:
+  stage: test
+  trigger:
+    include:
+      - local: tests/pipelines/container/monorepo.yml
+    strategy: depend
+  rules:
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      changes:
+        - container/**/*
+
+pipelines:container:python:
+  stage: test
+  trigger:
+    include:
+      - local: tests/pipelines/container/python.yml
+    strategy: depend
+  rules:
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      changes:
+        - container/**/*
+        - python/**/*
